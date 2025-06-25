@@ -323,7 +323,7 @@ void System :: initialize_velocities(){ //serve per calcolare r al tempot - delt
 
 //DIRAC DELTA INITIAL DISTRIBUTION
     if (_vdistr==1){ 
-      double vT= sqrt(_temp); //velocità scelta a caso
+      double vT= sqrt(3*_temp); //velocità scelta a caso
       for (int i=0; i<_npart; i++){
         double r1 = _rnd.Rannyu();
         double r2 =_rnd.Rannyu();
@@ -787,6 +787,7 @@ void System :: measure(){ // Measure properties
         double v_sup = v_inf + _bin_size_v;
         if (velocities(i)>v_inf && velocities(i)<=v_sup){
            _measurement(_index_pofv+j) ++;
+        
            
       }
       }
@@ -895,22 +896,22 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
   ofstream coutf;
 
   double average, sum_average, sum_ave2;
-  
-  vec pofv_ave(_n_bins_v);
-  vec pofv_sum_ave(_n_bins_v);
-  vec pofv_sum_ave2(_n_bins_v);
-  pofv_ave.zeros();
 
-  vec gofr_ave(_n_bins);
-  vec gofr_sum_ave(_n_bins);
-  vec gofr_sum_ave2(_n_bins);
-  gofr_ave.zeros();
+
   
   _average     = _block_av / double(_nsteps); 
   _global_av  += _average;
   _global_av2 += _average % _average; // % -> element-wise multiplication: di 2 vettori faccio il prodotto componente per componente equivalente, e ottengo un vettore dei prodotti
 
   if (_measure_pofv){
+      
+  vec pofv_ave(_n_bins_v);
+  vec pofv_sum_ave(_n_bins_v);
+  vec pofv_sum_ave2(_n_bins_v);
+  pofv_ave.zeros();
+  pofv_sum_ave.zeros();
+  pofv_sum_ave2.zeros();
+
     coutf.open("../OUTPUT/pofv.csv",ios::app);
     for (int j=0; j<_n_bins_v;j++){
     pofv_ave(j)  = _average(_index_pofv+j);
@@ -1071,6 +1072,12 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
 
   // GOFR //////////////////////////////////////////////////////////////////////
 if (_measure_gofr){
+    vec gofr_ave(_n_bins);
+  vec gofr_sum_ave(_n_bins);
+  vec gofr_sum_ave2(_n_bins);
+  gofr_ave.zeros();
+  gofr_sum_ave.zeros();
+  gofr_sum_ave2.zeros();
       ofstream coutg;
       coutg.open("../OUTPUT/gofr_blockave.csv",ios::app);
       coutf.open("../OUTPUT/gofr.csv",ios::app);

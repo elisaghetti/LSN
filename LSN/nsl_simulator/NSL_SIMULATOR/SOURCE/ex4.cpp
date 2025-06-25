@@ -3,6 +3,16 @@
 #include "color.h"
 using namespace std;
 
+void logMemoryUsage(const std::string& label = "") {
+    std::ifstream status_file("/proc/self/status");
+    std::string line;
+    while (std::getline(status_file, line)) {
+        if (line.substr(0, 6) == "VmRSS:") { // Resident Set Size: actual memory used
+            std::cout << "[MEM] " << label << " " << line << std::endl;
+        }
+    }
+}
+
 int main (){
 
     int nconf = 1;
@@ -48,9 +58,12 @@ SYS.CheckSizes();
             nconf++;
             }
         }
- 
+      
+       
+
     cout<<"Block "<<i<<" completed"<<endl;
 
+ 
     SYS.averages(i+1);
     cout<<"ave"<<endl;
     SYS.block_reset(i+1);
