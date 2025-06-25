@@ -73,12 +73,16 @@ void System :: move(int i){ // Propose a MC move for particle i
   double r = _rnd.Rannyu();
   if (r>p) _particle(i).flip();
     }
+
+
    else {           // M(RT)^2
     if(_sim_type == 1){       // LJ system
       vec shift(_ndim);       // Will store the proposed translation
+
       for(int j=0; j<_ndim; j++){
         shift(j) = _rnd.Rannyu(-1.0,1.0) * _delta; // uniform distribution in [-_delta;_delta)
       }
+
       _particle(i).translate(shift, _side);  //Call the function Particle::translate
       if(this->metro(i)){ //Metropolis acceptance evaluation
         _particle(i).acceptmove();
@@ -169,11 +173,11 @@ void System :: initialize(){ // Initialize the System object according to the co
         cerr << "PROBLEM: unknown simulation type" << endl;
         exit(EXIT_FAILURE);
       }
-  
-      if(_sim_type == 0)      coutf << "LJ MOLECULAR DYNAMICS (NVE) SIMULATION"  << endl;
+            if(_sim_type == 0)      coutf << "LJ MOLECULAR DYNAMICS (NVE) SIMULATION"  << endl;
       else if(_sim_type == 1) coutf << "LJ MONTE CARLO (NVT) SIMULATION"         << endl;
       else if(_sim_type == 2) coutf << "ISING 1D MONTE CARLO (MRT^2) SIMULATION" << endl;
       else if(_sim_type == 3) coutf << "ISING 1D MONTE CARLO (GIBBS) SIMULATION" << endl;
+
     } 
     else if( property == "RESTART" ){
       input >> _restart;
@@ -243,6 +247,44 @@ void System :: initialize(){ // Initialize the System object according to the co
   coutf << "System initialized!" << endl;
   coutf.close();
   return;
+}
+
+void System:: equilibrate(){
+
+
+  if (_equilibration==1){
+     ofstream out("../OUTPUT/Equilibration.csv");
+  out<<"Step\tTemp"<<endl;
+  cout<<_DeltaT<<endl;
+   _temp += -1.*_DeltaT;
+    _measure_temp=true;
+    _measure_kenergy=true;
+    _nprop=2;
+    _index_temp=1;
+    _index_kenergy=0;
+    _measurement.resize(_nprop);
+    Reset_Averages();
+   
+    cout<<YELLOW<<"Equilibration started at temperature "<<_temp<<RESET<<endl;
+
+    for(int i=0; i<_eq_steps;i++){
+      if(i%200==0) cout<<i<<endl;
+      step();
+           
+      measure();
+
+      out<<i<<"\t"<<_measurement(_index_temp)<<endl;
+    }
+
+    cout<<YELLOW<<"Equilibration completed at temperature "<<_measurement(_index_temp)<<RESET<<endl;
+    Reset_Averages();
+    _measurement.zeros();
+    
+   _temp +=_DeltaT;
+    out.close();
+  }
+  else cerr<<"To perform equilibration you must set input to 1, and specify number of equilibration steps and Delta T "<<endl;
+ 
 }
 
 void System :: initialize_velocities(){ //serve per calcolare r al tempot - delta t
@@ -371,14 +413,21 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         //coutp << "#     BLOCK:  ACTUAL_PE:     PE_AVE:      ERROR:" << endl;
         coutp << "BLOCK\tACTUAL_PE\tPE_AVE\tERROR" << endl;
         coutp.close();
+
+        coutp.open("../OUTPUT/U_block_length.csv");
+        coutp << "LENGTH\tERROR" << endl;
+        coutp.close();
+
         _nprop++;
         _index_penergy = index_property;
+        
+        
         _measure_penergy = true;
         index_property++;
        // _vtail = 0.0; // TO BE FIXED IN EXERCISE 7
          double A = 8.*M_PI*_rho;
         _vtail = A/double(9*pow(_r_cut,9))-A/double(3*pow(_r_cut,3)); //manca epsilon?
-        cout<<"vtail: "<<_vtail<<endl;
+        
 
       } else if( property == "KINETIC_ENERGY" ){
         //ofstream coutk("../OUTPUT/kinetic_energy.dat");
@@ -427,16 +476,25 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         cout<<"ptail: "<<_ptail<<endl;
       } else if( property == "GOFR" ){
         //ofstream coutgr("../OUTPUT/gofr.dat");
-        ofstream coutgr("../OUTPUT/gofr.csv");
-        coutgr << "# DISTANCE:     AVE_GOFR:        ERROR:" << endl;
-        coutgr.close();
+
         input>>_n_bins;
         _nprop+=_n_bins;
         _bin_size = (_halfside.min() )/(double)_n_bins;
+          ofstream coutgr("../OUTPUT/gofr.csv");
+        coutgr <<"BIN SIZE\t"<<_bin_size<<endl;
+        coutgr << "BIN\tDISTANCE\tAVE_GOFR\tERROR" << endl;
+        coutgr.close();
+
+        coutgr.open("../OUTPUT/gofr_blockave.csv");
+        coutgr <<"BIN SIZE\t"<<_bin_size<<endl;
+        coutgr << "BIN\tDISTANCE\tAVE_GOFR" << endl;
+        coutgr.close();
         _measure_gofr = true;
         _index_gofr = index_property;
         index_property+= _n_bins;
-      } else if( property == "POFV" ){ //SERVE PER ES 4
+      } 
+      
+      else if( property == "POFV" ){
         if(_sim_type > 0){
           cerr << "PROBLEM: DOES NOT MAKE SENSE COMPUTING POFV FOR MC" << endl;
           exit(EXIT_FAILURE);
@@ -444,20 +502,23 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         //ofstream coutpv("../OUTPUT/pofv.dat");
         input>>_n_bins_v;
         _nprop += _n_bins_v;
-        _bin_size_v = 8.0*sqrt(_temp)/(double)_n_bins_v;
+        _bin_size_v = 4.0*sqrt(_temp)/(double)_n_bins_v;
 
         ofstream coutpv("../OUTPUT/pofv.csv");
         coutpv<<"INITIAL DISTRIBUTION\t";
         if(_vdistr==0) coutpv<<"MB"<<endl;
         else coutpv<<"DELTA"<<endl;
         coutpv<<"BIN SIZE\t"<<_bin_size_v<<endl;
-        coutpv << "BIN\tVELOCITY\tAVE_POFV\tERROR" << endl;
+        coutpv << "BIN\tVMIN\tVMAX\tAVE\tPROG_AVE_POFV\tERROR" << endl;
         coutpv.close();
         
-        //_bin_size_v = 4.0*_temp/(double)_n_bins_v; // TO BE FIXED IN EXERCISE 4 -> USARE SQRT(T) Invece che T
+
         _measure_pofv = true;
         _index_pofv = index_property; //dove inizia l'istogramma
-        index_property += _n_bins_v; 
+        index_property += _n_bins_v-1;
+        cout<<index_property<<endl;
+         
+
       } else if( property == "MAGNETIZATION" ){
         if (_H==0){
       cout<<"Magnetization measurement only makes sense with non zero external field (h)"<<endl;
@@ -519,17 +580,30 @@ void System :: initialize_properties(){ // Initialize data members used for meas
 
   // according to the number of properties, resize the vectors _measurement,_average,_block_av,_global_av,_global_av2
   _measurement.resize(_nprop);
-  Reset_Averages();
+  cout<<_measurement.size()<<endl;
+  _average.resize(_nprop);
+  _block_av.resize(_nprop);
+  _global_av.resize(_nprop);
+  _global_av2.resize(_nprop);
+  _average.zeros();
+  _global_av.zeros();
+  _global_av2.zeros();
+  //Reset_Averages();
   _nattempts = 0;
   _naccepted = 0;
 
-    cout<<BLUE<<"Simulation of: ";
-  if (_sim_type==0) cout<<BLUE<<"Molecular Dynamics with Verlet Algorithm"<<endl;
-  if (_sim_type==1) cout<<BLUE<<"Molecular Dynamics with Montecarlo"<<endl;
-  if (_sim_type==2) cout<<BLUE<<"1D Ising model with Metropolis algorithm"<<endl;
-  if (_sim_type==3) cout<<BLUE<<"1D Ising model with Gibbs algorithm"<<endl;
+
 
   return;
+}
+
+void System:: CheckSizes(){
+  cout<<"Nprop:" <<_nprop<<endl;
+  cout<<"Nbinsv "<< _n_bins_v<<endl;
+  cout<<"Index T: "<<_index_temp<<endl;
+  cout<<"Index K: "<<_index_kenergy<<endl;
+  cout<<"Index pofv: "<<_index_pofv<<endl;
+  cout<<"Measurement size: "<<_measurement.size()<<endl;
 }
 
 void System::Reset_Averages(){
@@ -674,41 +748,53 @@ void System :: measure(){ // Measure properties
   double magnetization=0.0;
   double virial=0.0;
 
-  vec pofv_temp(_npart);
+  vec pofv_temp(_n_bins_v);
   pofv_temp.zeros();
-  double v_max = _n_bins_v*_bin_size_v;
+
 
   if (_measure_penergy or _measure_pressure or _measure_gofr) { 
     for (int i=0; i<_npart-1; i++){ //ciclo su tutte le coppie possibili,solo una volta
       for (int j=i+1; j<_npart; j++){
+        
         distance(0) = this->pbc( _particle(i).getposition(0,true) - _particle(j).getposition(0,true), 0);
         distance(1) = this->pbc( _particle(i).getposition(1,true) - _particle(j).getposition(1,true), 1);
         distance(2) = this->pbc( _particle(i).getposition(2,true) - _particle(j).getposition(2,true), 2);
+        
         dr = sqrt( dot(distance,distance) );
+        
         // GOFR ... TO BE FIXED IN EXERCISE 7
         if(dr < _r_cut){
           if(_measure_penergy)  penergy_temp += 1.0/pow(dr,12) - 1.0/pow(dr,6); // POTENTIAL ENERGY (LJ)
           if(_measure_pressure) virial       += 1.0/pow(dr,12) - 0.5/pow(dr,6); // PRESSURE (contributo delle forze interne, dal viriale)
         }
+        if(_measure_gofr){
+          for (int k=0; k<_n_bins;k++){
+            if (dr> k*_bin_size && dr<(k+1)*_bin_size) _measurement(_index_gofr+k)+=2;
+          }
+        }
       }
     }
   }
-  // POFV ... TO BE FIXED IN EXERCISE 4 : inserire il calcolo della distrib del modulo delle v
+
   if (_measure_pofv){
-    for (int i=0; i<_npart;i++){      
-      pofv_temp(i)+= sqrt(dot( _particle(i).getvelocity() , _particle(i).getvelocity() ));
-
+    vec velocities(_npart);
+    velocities.zeros();
+    for (int i=0; i<_npart;i++){   
+      velocities (i) = sqrt(dot( _particle(i).getvelocity() , _particle(i).getvelocity() ));
+      //velocities (i) = _particle(i).getvelocity();
       for (int j=0;j<_n_bins_v;j++){
-        double v_inf=j*_bin_size_v;
+        double v_inf=(j+1)*_bin_size_v;
         double v_sup = v_inf + _bin_size_v;
-
-        if (pofv_temp(i)>v_inf && pofv_temp(i)<=v_sup) _measurement(_index_pofv+j)+=pofv_temp(i);
+        if (velocities(i)>v_inf && velocities(i)<=v_sup){
+           _measurement(_index_pofv+j) ++;
+           
       }
       }
 
       
     
   }
+}
   // POTENTIAL ENERGY //////////////////////////////////////////////////////////
   if (_measure_penergy){ //registro le info solo se sto misurando quella proprietà 
     penergy_temp = _vtail + 4.0 * penergy_temp / double(_npart); //moltiplicazione fuori dal ciclo per efficienza
@@ -757,7 +843,8 @@ if (_measure_cv){
   //if (_measure_temp and _measure_kenergy) _measurement(_index_temp) = (2.0/3.0) * kenergy_temp;
  if (_measure_temp){
     if(_measure_kenergy) _measurement(_index_temp) = (2.0/3.0) * kenergy_temp;
-    else cerr<<"Temperature measurement needs kinetic energy measurement"<<endl;
+    //else cerr<<"Temperature measurement needs kinetic energy measurement"<<endl;
+    else _measurement(_index_temp) = _temp;
   } 
     
     
@@ -813,6 +900,11 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
   vec pofv_sum_ave(_n_bins_v);
   vec pofv_sum_ave2(_n_bins_v);
   pofv_ave.zeros();
+
+  vec gofr_ave(_n_bins);
+  vec gofr_sum_ave(_n_bins);
+  vec gofr_sum_ave2(_n_bins);
+  gofr_ave.zeros();
   
   _average     = _block_av / double(_nsteps); 
   _global_av  += _average;
@@ -824,8 +916,9 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
     pofv_ave(j)  = _average(_index_pofv+j);
     pofv_sum_ave(j) = _global_av(_index_pofv+j);
     pofv_sum_ave2(j) = _global_av2(_index_pofv+j);
-        coutf <<j<<"\t"<< j*_bin_size_v+_bin_size_v ;
-         // << "\t" << average
+        coutf <<j<<"\t"<< (j+1)*_bin_size_v<<"\t"<<(j+1)*_bin_size_v+_bin_size_v ;
+        
+          coutf<< "\t" << pofv_ave(j);
           coutf<< "\t"<< pofv_sum_ave(j)/double(blk)<<"\t";
           coutf<< this->error(pofv_sum_ave(j), pofv_sum_ave2(j), blk)<<endl; 
         }
@@ -850,6 +943,13 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
           << "\t"<< sum_average/double(blk)
           << "\t" << this->error(sum_average, sum_ave2, blk) << endl; 
     coutf.close();
+
+    if (blk==_nblocks){
+      ofstream coutpb;
+      coutpb.open("../OUTPUT/U_block_length.csv",ios::app);
+      coutpb<<_nsteps<<"\t"<< this->error(sum_average, sum_ave2, blk)<<endl;
+      coutpb.close();
+    }
   }
   // KINETIC ENERGY ////////////////////////////////////////////////////////////
   if (_measure_kenergy){
@@ -967,8 +1067,30 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
           << setw(12) << this->error(sum_average, sum_ave2, blk) << endl;
     coutf.close();
   }
+
+
   // GOFR //////////////////////////////////////////////////////////////////////
-  // TO BE FIXED IN EXERCISE 7
+if (_measure_gofr){
+      ofstream coutg;
+      coutg.open("../OUTPUT/gofr_blockave.csv",ios::app);
+      coutf.open("../OUTPUT/gofr.csv",ios::app);
+    for (int j=0; j<_n_bins;j++){
+    gofr_ave(j)  = _average(_index_gofr+j);
+    gofr_sum_ave(j) = _global_av(_index_gofr+j);
+    gofr_sum_ave2(j) = _global_av2(_index_gofr+j);
+    double rdr=j*_bin_size+_bin_size;
+    double r = j*_bin_size;
+    double norm = _rho*_npart*(4. * M_PI/3.)*(pow(rdr,3)-pow(r,3));
+        coutf <<j<<"\t"<< j*_bin_size+_bin_size;
+          coutf<< "\t"<< (1./double(norm))*(gofr_sum_ave(j)/double(blk))<<"\t";
+          coutf<< (1./double(norm))*this->error(gofr_sum_ave(j), gofr_sum_ave2(j), blk)<<endl; 
+
+          coutg<<j<<"\t"<< j*_bin_size+_bin_size<<"\t" << (1./double(norm))*gofr_ave(j)<<endl;
+        }
+    coutf<<endl;
+    coutg<<endl;
+    coutf.close();
+}
   // POFV //////////////////////////////////////////////////////////////////////
  /* if (_measure_pofv){
     coutf.open("../OUTPUT/pofv.csv",ios::app);
@@ -1028,8 +1150,14 @@ void System::Change_Temp(double T){
   _beta=1./_temp;
 }
 
+void System::Set_Temp(double T){
+  _temp =T;
+  _beta=1./_temp;
+}
+
 double System::Get_Temp(){
-  return _temp;
+  if (_measurement(_index_temp) != 0)return _measurement(_index_temp);
+    else return _temp;
 }
 void System::Set_Restart (double R){
   _restart =R;
@@ -1042,6 +1170,22 @@ double System::GetRestart(){
 void System::Set_h(double h){
   _H = h;
 }
+
+void System::Set_symtype(int ST){
+  _sim_type=ST;
+}
+int System::Get_symtype(){
+  return _sim_type;
+}
+
+void System::Change_nsteps(double Delta){
+  _nsteps+=Delta;}
+
+int System:: Get_nsteps(){
+  return _nsteps;
+}
+
+
 /****************************************************************
 *****************************************************************
     _/    _/  _/_/_/  _/       Numerical Simulation Laboratory

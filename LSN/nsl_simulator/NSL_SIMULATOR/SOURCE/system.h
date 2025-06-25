@@ -28,6 +28,9 @@ class System { //data members hanno underscore
 private:
   const int _ndim = 3;  // Dimensionality of the system
   bool _restart;        // Flag indicating if the simulation is restarted se= partiamo da zero, se =1 partiamo da vecchia simulazione
+  bool _equilibration;
+  int _eq_steps;
+  double _DeltaT;
   int _sim_type;        // Type of simulation (e.g., Lennard-Jones, Ising) (=0: dinamica molecolare)
   int _vdistr;          //type of initial velocity distribution (0:maxwell boltzmann, 1 dirac delta)
   int _npart;           // Number of particles
@@ -99,10 +102,21 @@ public: // Function declarations
 
   void Change_Temp(double T);
   void Set_Restart(double R);
+void CheckSizes();
+  void Set_Temp(double T);
+    void Set_symtype(int ST);
+    int Get_symtype();
+
+    void equilibrate();
+
 
   double Get_Temp ();
   double GetRestart();
   void Reset_Averages();
+
+void Change_nsteps(double Delta);
+
+int Get_nsteps();
 
   void Set_h(double h);
 

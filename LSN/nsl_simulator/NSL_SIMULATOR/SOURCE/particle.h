@@ -35,6 +35,7 @@ public: // Function declarations
   int  getspin();                        // Get the spin of the particle NON SERVE PER ES 4
   void setspin(int spin);                // Set the spin of the particle  NON SERVE PER ES 4
   double getposition(int dim, bool xnew);// Get the position of the particle along a specific dimension //bool = true pos nuova, =falsopos vecchia
+
   void   setposition(int dim, double position); // Set the position of the particle along a specific dimension
   void   setpositold(int dim, double position); // Set the previous position of the particle along a specific dimension
   double getvelocity(int dim);           // Get the velocity of the particle along a specific dimension

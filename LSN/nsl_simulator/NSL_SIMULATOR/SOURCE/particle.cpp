@@ -54,6 +54,7 @@ double Particle :: getposition(int dim, bool xnew){
    else return _xold(dim);
 }
 
+
 void Particle :: setposition(int dim, double position){
    _x(dim) = position;
    return;
