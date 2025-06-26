@@ -3,16 +3,6 @@
 #include "color.h"
 using namespace std;
 
-void logMemoryUsage(const std::string& label = "") {
-    std::ifstream status_file("/proc/self/status");
-    std::string line;
-    while (std::getline(status_file, line)) {
-        if (line.substr(0, 6) == "VmRSS:") { // Resident Set Size: actual memory used
-            std::cout << "[MEM] " << label << " " << line << std::endl;
-        }
-    }
-}
-
 int main (){
 
     int nconf = 1;
@@ -45,8 +35,39 @@ int main (){
     SYS.block_reset(0); //resets block accumulators to zero
     ////////////////////////////////////////////////////////////////////////////////////
 */
-SYS.CheckSizes();
-    for(int i=0; i < SYS.get_nbl(); i++){ //loop over blocks
+    for(int i=0; i <SYS.get_nbl(); i++){ //loop over blocks
+        for(int j=0; j <SYS.get_nsteps(); j++){ //loop over steps in a block
+        // out<<i*SYS.get_nsteps()+j;
+        SYS.step();
+
+        SYS.measure();
+
+        if(j%50 == 0){ //ne stampa una ogni 50
+            //SYS.write_XYZ(nconf); //Write actual configuration in XYZ format //Commented to avoid "filesystem full"!  
+            nconf++;
+            }
+        }
+      
+       
+
+    if(i%100==0)cout<<"Block "<<i<<" completed"<<endl;
+
+ 
+    SYS.averages(i+1);
+    //cout<<"ave"<<endl;
+    SYS.block_reset(i+1);
+
+    }
+
+    //EX4.3: inverting direction of time
+
+  
+    SYS.Reset_Averages();
+    SYS.block_reset(0);
+    SYS.time_inv();
+    cout<<"Time inversion started"<<endl;
+
+for(int i=0; i < SYS.get_nbl(); i++){ //loop over blocks
         for(int j=0; j < SYS.get_nsteps(); j++){ //loop over steps in a block
         // out<<i*SYS.get_nsteps()+j;
         SYS.step();
@@ -61,16 +82,14 @@ SYS.CheckSizes();
       
        
 
-    cout<<"Block "<<i<<" completed"<<endl;
+    if (i%100==0) cout<<"Block "<<i<<" completed"<<endl;
 
  
     SYS.averages(i+1);
-    cout<<"ave"<<endl;
+    
     SYS.block_reset(i+1);
 
     }
-
-    SYS.finalize();
     cout<<"check finalize"<<endl;
   
 return 0;

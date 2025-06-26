@@ -26,11 +26,14 @@ void System :: step(){ // Perform a simulation step
 
 void System :: Verlet(){ //calcola forze e implementa e alg di Verlet
   double xnew, ynew, znew;
-  for(int i=0; i<_npart; i++){ //Force acting on particle i (in unità naturali m=1, quindi forza=accelerazione)
-    _fx(i) = this->Force(i,0);
+  for(int i=0; i<_npart; i++){
+     _fx(i) = this->Force(i,0);
     _fy(i) = this->Force(i,1);
     _fz(i) = this->Force(i,2);
   }
+  if (_time_inversion== 0){
+   //Force acting on particle i (in unità naturali m=1, quindi forza=accelerazione)
+
   for(int i=0; i<_npart; i++){ //Verlet integration scheme: prima sposto le particelle, poi calcolo la stima delle velocità
     xnew = this->pbc( 2.0 * _particle(i).getposition(0,true) - _particle(i).getposition(0,false) + _fx(i) * pow(_delta,2), 0);
     ynew = this->pbc( 2.0 * _particle(i).getposition(1,true) - _particle(i).getposition(1,false) + _fy(i) * pow(_delta,2), 1);
@@ -46,7 +49,44 @@ void System :: Verlet(){ //calcola forze e implementa e alg di Verlet
   _naccepted += _npart;
   return;
 }
+  else{ //TIME-INVERTED VERLET
 
+  for(int i=0; i<_npart; i++){ 
+    xnew = this->pbc( 2.0 * _particle(i).getposition(0,true) - _particle(i).getposition(0,false) + _fx(i) * pow(_delta,2), 0);
+    ynew = this->pbc( 2.0 * _particle(i).getposition(1,true) - _particle(i).getposition(1,false) + _fy(i) * pow(_delta,2), 1);
+    znew = this->pbc( 2.0 * _particle(i).getposition(2,true) - _particle(i).getposition(2,false) + _fz(i) * pow(_delta,2), 2);
+    _particle(i).setvelocity(0,-1*( this->pbc(xnew-_particle(i).getposition(0,false), 0)/(2.0 * _delta)));
+    _particle(i).setvelocity(1, -1*(this->pbc(ynew - _particle(i).getposition(1,false), 1)/(2.0 * _delta)));
+    _particle(i).setvelocity(2, -1*(this->pbc(znew - _particle(i).getposition(2,false), 2)/(2.0 * _delta)));
+    _particle(i).acceptmove(); // xold = xnew -> sovrascrive posizioninuove alle vecchie
+    _particle(i).setposition(0, xnew);
+    _particle(i).setposition(1, ynew);
+    _particle(i).setposition(2, znew);
+  }
+  _naccepted += _npart;
+  return;
+  }
+}
+void System::time_inv() {
+  _time_inversion=1;
+  double x,y,z;
+  for(int i =0;i<_npart;i++){
+    x= _particle(i).getposition(0,true);
+    y = _particle(i).getposition(1,true);
+    z= _particle(i).getposition(2,true);
+
+    //r(t)-> r(t-dt)
+     _particle(i).setposition(0,_particle(i).getposition(0,false));
+     _particle(i).setposition(1,_particle(i).getposition(1,false));
+     _particle(i).setposition(2,_particle(i).getposition(2,false));
+
+     //r(t-dt) -> r(t)
+     _particle(i).setpositold(0,x);
+      _particle(i).setpositold(1,y);
+       _particle(i).setpositold(2,z);
+
+  }
+}
 double System :: Force(int i, int dim){ //forza agente sullla particella i lungo la dimensione dim
   double f=0.0, dr;
   vec distance;
@@ -235,6 +275,10 @@ void System :: initialize(){ // Initialize the System object according to the co
       if(_vdistr==0) coutf<<"MB"<<endl;
       else coutf<<"DIRACDELTA"<<endl;
     }
+    else if (property == "TIME_INV"){
+      input>>_time_inversion;
+      coutf<<"TIME INVERSION: "<<_time_inversion<<endl;
+    }
     else if( property == "ENDINPUT" ){
       coutf << "Reading input completed!" << endl;
       break;
@@ -249,43 +293,6 @@ void System :: initialize(){ // Initialize the System object according to the co
   return;
 }
 
-void System:: equilibrate(){
-
-
-  if (_equilibration==1){
-     ofstream out("../OUTPUT/Equilibration.csv");
-  out<<"Step\tTemp"<<endl;
-  cout<<_DeltaT<<endl;
-   _temp += -1.*_DeltaT;
-    _measure_temp=true;
-    _measure_kenergy=true;
-    _nprop=2;
-    _index_temp=1;
-    _index_kenergy=0;
-    _measurement.resize(_nprop);
-    Reset_Averages();
-   
-    cout<<YELLOW<<"Equilibration started at temperature "<<_temp<<RESET<<endl;
-
-    for(int i=0; i<_eq_steps;i++){
-      if(i%200==0) cout<<i<<endl;
-      step();
-           
-      measure();
-
-      out<<i<<"\t"<<_measurement(_index_temp)<<endl;
-    }
-
-    cout<<YELLOW<<"Equilibration completed at temperature "<<_measurement(_index_temp)<<RESET<<endl;
-    Reset_Averages();
-    _measurement.zeros();
-    
-   _temp +=_DeltaT;
-    out.close();
-  }
-  else cerr<<"To perform equilibration you must set input to 1, and specify number of equilibration steps and Delta T "<<endl;
- 
-}
 
 void System :: initialize_velocities(){ //serve per calcolare r al tempot - delta t
   double xold, yold, zold;
@@ -411,7 +418,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
        // ofstream coutp("../OUTPUT/potential_energy.dat");
           ofstream coutp("../OUTPUT/potential_energy.csv");
         //coutp << "#     BLOCK:  ACTUAL_PE:     PE_AVE:      ERROR:" << endl;
-        coutp << "BLOCK\tACTUAL_PE\tPE_AVE\tERROR" << endl;
+        coutp << "T_SIGN\tBLOCK\tACTUAL_PE\tPE_AVE\tERROR" << endl;
         coutp.close();
 
         coutp.open("../OUTPUT/U_block_length.csv");
@@ -432,7 +439,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
       } else if( property == "KINETIC_ENERGY" ){
         //ofstream coutk("../OUTPUT/kinetic_energy.dat");
         ofstream coutk("../OUTPUT/kinetic_energy.csv");
-        coutk << "#     BLOCK:   ACTUAL_KE:    KE_AVE:      ERROR:" << endl;
+        coutk << "T_SIGN\tBLOCK:\tACTUAL_KE:\tKE_AVE:\tERROR:"<< endl;
         coutk.close();
         _nprop++;
         _measure_kenergy = true;
@@ -456,7 +463,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
       } else if( property == "TEMPERATURE" ){
         ofstream coutte("../OUTPUT/temperature.csv");
         //ofstream coutte("../OUTPUT/temperature.dat");
-        coutte << "#\tBLOCK\tACTUAL_T\tT_AVE\tERROR"<< endl;
+        coutte << "T_SIGN\tBLOCK\tACTUAL_T\tT_AVE\tERROR"<< endl;
         coutte.close();
         _nprop++;
         _measure_temp = true;
@@ -509,7 +516,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         if(_vdistr==0) coutpv<<"MB"<<endl;
         else coutpv<<"DELTA"<<endl;
         coutpv<<"BIN SIZE\t"<<_bin_size_v<<endl;
-        coutpv << "BIN\tVMIN\tVMAX\tAVE\tPROG_AVE_POFV\tERROR" << endl;
+        coutpv << "T_SIGN\tBIN\tVMIN\tVMAX\tAVE\tPROG_AVE_POFV\tERROR" << endl;
         coutpv.close();
         
 
@@ -903,6 +910,9 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
   _global_av  += _average;
   _global_av2 += _average % _average; // % -> element-wise multiplication: di 2 vettori faccio il prodotto componente per componente equivalente, e ottengo un vettore dei prodotti
 
+  int tsign;
+  if(_time_inversion) tsign = -1;
+  else tsign = +1;
   if (_measure_pofv){
       
   vec pofv_ave(_n_bins_v);
@@ -912,12 +922,14 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
   pofv_sum_ave.zeros();
   pofv_sum_ave2.zeros();
 
+
+
     coutf.open("../OUTPUT/pofv.csv",ios::app);
     for (int j=0; j<_n_bins_v;j++){
     pofv_ave(j)  = _average(_index_pofv+j);
     pofv_sum_ave(j) = _global_av(_index_pofv+j);
     pofv_sum_ave2(j) = _global_av2(_index_pofv+j);
-        coutf <<j<<"\t"<< (j+1)*_bin_size_v<<"\t"<<(j+1)*_bin_size_v+_bin_size_v ;
+        coutf<<tsign<<"\t"<<j<<"\t"<< (j+1)*_bin_size_v<<"\t"<<(j+1)*_bin_size_v+_bin_size_v ;
         
           coutf<< "\t" << pofv_ave(j);
           coutf<< "\t"<< pofv_sum_ave(j)/double(blk)<<"\t";
@@ -939,7 +951,7 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
           << setw(12) << average
           << setw(12) << sum_average/double(blk)
           << setw(12) << this->error(sum_average, sum_ave2, blk) << endl; //calcolo dell'incertezza con media a blocchi*/
-        coutf << blk 
+        coutf<<tsign<<"\t"<< blk 
           << "\t" << average
           << "\t"<< sum_average/double(blk)
           << "\t" << this->error(sum_average, sum_ave2, blk) << endl; 
@@ -959,10 +971,10 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
     average  = _average(_index_kenergy);
     sum_average = _global_av(_index_kenergy);
     sum_ave2 = _global_av2(_index_kenergy);
-    coutf << setw(12) << blk
-          << setw(12) << average
-          << setw(12) << sum_average/double(blk)
-          << setw(12) << this->error(sum_average, sum_ave2, blk) << endl;
+    coutf<<tsign<<"\t" << blk
+          << "\t"<< average
+          << "\t"<< sum_average/double(blk)
+          << "\t"<< this->error(sum_average, sum_ave2, blk) << endl;
     coutf.close();
   }
   // TOTAL ENERGY //////////////////////////////////////////////////////////////
@@ -1049,7 +1061,7 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
     average  = _average(_index_temp);
     sum_average = _global_av(_index_temp);
     sum_ave2 = _global_av2(_index_temp);
-    coutf << "\t"<< blk
+    coutf <<tsign<< "\t"<< blk
           << "\t" << average
           << "\t" << sum_average/double(blk)
           << "\t" << this->error(sum_average, sum_ave2, blk) << endl;

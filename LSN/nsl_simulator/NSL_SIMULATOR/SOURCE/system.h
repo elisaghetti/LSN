@@ -28,7 +28,7 @@ class System { //data members hanno underscore
 private:
   const int _ndim = 3;  // Dimensionality of the system
   bool _restart;        // Flag indicating if the simulation is restarted se= partiamo da zero, se =1 partiamo da vecchia simulazione
-  bool _equilibration;
+  bool _time_inversion;
   int _eq_steps;
   double _DeltaT;
   int _sim_type;        // Type of simulation (e.g., Lennard-Jones, Ising) (=0: dinamica molecolare)
@@ -99,7 +99,7 @@ public: // Function declarations
   double Boltzmann(int i, bool xnew); // Calculate Boltzmann factor for Metropolis acceptance
 
   void Get_Measurement(vec &meas);
-
+  void time_inv();
   void Change_Temp(double T);
   void Set_Restart(double R);
 void CheckSizes();
