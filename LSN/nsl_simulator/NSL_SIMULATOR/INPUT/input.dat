@@ -5,7 +5,7 @@ NPART                  108
 RHO                    0.05
 R_CUT                  5.0
 DELTA                  0.001
-NBLOCKS                5000
+NBLOCKS                10000
 NSTEPS                 1
 VDISTR				   1
 TIME_INV               0
