@@ -524,7 +524,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         _measure_pofv = true;
         _index_pofv = index_property; //dove inizia l'istogramma
         index_property += _n_bins_v-1;
-        cout<<index_property<<endl;
+       
          
 
       } else if( property == "MAGNETIZATION" ){
@@ -588,15 +588,9 @@ void System :: initialize_properties(){ // Initialize data members used for meas
 
   // according to the number of properties, resize the vectors _measurement,_average,_block_av,_global_av,_global_av2
   _measurement.resize(_nprop);
-  cout<<_measurement.size()<<endl;
-  _average.resize(_nprop);
-  _block_av.resize(_nprop);
-  _global_av.resize(_nprop);
-  _global_av2.resize(_nprop);
-  _average.zeros();
-  _global_av.zeros();
-  _global_av2.zeros();
-  //Reset_Averages();
+
+
+  Reset_Averages();
   _nattempts = 0;
   _naccepted = 0;
 
