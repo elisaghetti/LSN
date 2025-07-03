@@ -17,8 +17,9 @@ int main (){
     else if(SYS.Get_symtype() == 3) cout << CYAN<<"ISING 1D MONTE CARLO (GIBBS) SIMULATION" <<RESET<< endl;
 
     SYS.block_reset(0);
+    
+    //EQUILIBRATION: uncomment for 4.1 ////////////////////////////////////////////////////////////////////
     /*
-    //EQUILIBRATION ////////////////////////////////////////////////////////////////////
     cout<<YELLOW<<"Equilibration started at temperature "<<SYS.Get_Temp()<<endl;
     
     ofstream out("../OUTPUT/Equilibration.csv");
@@ -33,8 +34,9 @@ int main (){
 
     SYS.Reset_Averages();
     SYS.block_reset(0); //resets block accumulators to zero
+    */
     ////////////////////////////////////////////////////////////////////////////////////
-*/
+
     for(int i=0; i <SYS.get_nbl(); i++){ //loop over blocks
         for(int j=0; j <SYS.get_nsteps(); j++){ //loop over steps in a block
         // out<<i*SYS.get_nsteps()+j;
@@ -50,7 +52,7 @@ int main (){
       
        
 
-    if(i%100==0)cout<<"Block "<<i<<" completed"<<endl;
+   if(i%100==0)cout<<"Block "<<i<<" completed"<<endl;
 
  
     SYS.averages(i+1);
@@ -58,7 +60,7 @@ int main (){
     SYS.block_reset(i+1);
 
     }
-
+ SYS.finalize();
     //EX4.3: inverting direction of time
 
   
@@ -90,6 +92,7 @@ for(int i=0; i < SYS.get_nbl(); i++){ //loop over blocks
     SYS.block_reset(i+1);
 
     }
+    SYS.finalize();
     cout<<"check finalize"<<endl;
   
 return 0;

@@ -331,6 +331,7 @@ void System :: initialize_velocities(){ //serve per calcolare r al tempot - delt
 //DIRAC DELTA INITIAL DISTRIBUTION
     if (_vdistr==1){ 
       double vT= sqrt(3*_temp); //velocità scelta a caso
+      //double vT= _temp; //velocità scelta a caso
       for (int i=0; i<_npart; i++){
         double r1 = _rnd.Rannyu();
         double r2 =_rnd.Rannyu();
