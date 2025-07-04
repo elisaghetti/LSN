@@ -15,27 +15,34 @@ RandomWalk :: RandomWalk(){}
 
 RandomWalk :: RandomWalk(int seed, int index){
 	
-	rnd.RandomSetup(index);
+	_rnd.RandomSetup(index);
 }
 RandomWalk :: RandomWalk(int N, double a){
-	N_steps = N;
-	step_length=a;
+	_Nsteps = N;
+	_steplength=a;
 }
 
 RandomWalk :: RandomWalk(int seed, double a, double x, double y, double z){
-    rnd.RandomSetup(seed);
-	step_length=a;
+    _rnd.RandomSetup(seed);
+	_steplength=a;
 	pos_x =x;
 	pos_y=y;
 	pos_z=z;
 }
 
 RandomWalk :: RandomWalk(double a, double x, double y, double z){
-	rnd.RandomSetup();
-	step_length=a;
+    _rnd.RandomSetup();
+	_steplength=a;
 	pos_x =x;
 	pos_y=y;
 	pos_z=z;
+}
+
+RandomWalk :: RandomWalk(Random rnd, vec start, double a){
+	_rnd =rnd;
+	//_rnd.RandomSetup();
+	_steplength=a;
+	_position = start;
 }
 
 
@@ -47,22 +54,25 @@ void RandomWalk ::SetPosition(double x, double y, double z){
 	pos_y=y;
 	pos_z=z;
 }
+void RandomWalk ::SetPosition(vec pos){
+for (int i=0;i<3;i++) _position[i] = pos[i];
+}
 
 
 
 void RandomWalk ::Get_seed(){
-	rnd.SaveSeed();
+	_rnd.SaveSeed();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void RandomWalk::Step_3D (){
 
-	double theta=rnd.Rannyu(0,M_PI);
-		double phi = rnd.Rannyu(0,2*M_PI);
+	double theta=_rnd.Rannyu(0,M_PI);
+		double phi = _rnd.Rannyu(0,2*M_PI);
 
-		double x= step_length*sin(theta)*cos(phi);
-		double y=step_length*sin(theta)*sin(phi);
-		double z= step_length*cos(theta);
+		double x= _steplength*sin(theta)*cos(phi);
+		double y=_steplength*sin(theta)*sin(phi);
+		double z= _steplength*cos(theta);
 
 		pos_x += x;
 		pos_y += y;
@@ -71,13 +81,13 @@ void RandomWalk::Step_3D (){
 /////////////////////////////////////////////////////////////////////////////////////////////////777
 void RandomWalk::Step_Lattice (){
 bool direction = true;
-	 double a = step_length;
+	 double a = _steplength;
 	 //imposta il verso (avanti/indietro)
-	double r1=rnd.Rannyu();
+	double r1=_rnd.Rannyu();
 	if (r1 <=0.5) direction = false;
 
 	//imposta la direzione (x/y/z)
-	double r2=rnd.Rannyu();
+	double r2=_rnd.Rannyu();
 	if(r2<= 1./3. ) {
 		if (direction==true) pos_x += a;
 		else pos_x += -a;
@@ -94,20 +104,18 @@ bool direction = true;
 
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*void RandomWalk::Step_3D (double pos_x, double pos_y, double pos_z){
-	double theta=Rannyu(0,M_PI);
-		double phi = Rannyu(0,2*M_PI);
+void RandomWalk::Step_unif (){
 
-		double x= step_length*sin(theta)*cos(phi);
-		double y=step_length*sin(theta)*sin(phi);
-		double z= step_length*cos(theta);
-
-		pos_x += x;
-		pos_y += y;
-		pos_z += z;
+for (int i=0;i<3;i++){
+	double step = _steplength*_rnd.Rannyu(-1.,1.);
+ 	_position[i] += step;
 }
-*/
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-double RandomWalk :: GetDistance(){
+/*double RandomWalk :: GetDistance(){
 	return sqrt(pos_x*pos_x + pos_y*pos_y + pos_z*pos_z);
+}*/
+double RandomWalk :: GetDistance(){
+	return norm(_position);
 }

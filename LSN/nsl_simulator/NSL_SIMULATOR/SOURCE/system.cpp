@@ -221,7 +221,7 @@ void System :: initialize(){ // Initialize the System object according to the co
     } 
     else if( property == "RESTART" ){
       input >> _restart;
-    } 
+    } step
     else if( property == "TEMP" ){
       input >> _temp;
       _beta = 1.0/_temp;

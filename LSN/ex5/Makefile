@@ -1,9 +1,9 @@
 CC = g++
 CFLAGS = -Wall -O3 --std=c++11
-RANDOM_PATH = /home/elisa/Scrivania/LSN/Classes
+RANDOM_PATH = /home/elisa/Scrivania/LSN/LSN/Classes
 
 main.exe : main.o random.o statistics.o RandomWalk.o copy_files 
-	$(CC) main.o random.o statistics.o RandomWalk.o -o main.exe
+	$(CC) main.o random.o statistics.o RandomWalk.o -o main.exe -larmadillo
 
 main.o : main.cpp $(RANDOM_PATH)/statistics.h $(RANDOM_PATH)/RandomWalk.h $(RANDOM_PATH)/random.h 
 	$(CC) -c main.cpp -o main.o $(CFLAGS) -I$(RANDOM_PATH)
