@@ -27,12 +27,13 @@ double Metropolis_Acceptance(double p_new,double p_old,double T_fwd, double T_bk
 }
 
 
-void Metropolis_Step(Random &rnd,RandomWalk &RW, double &acc_rate, bool ground){
+void Metropolis_Step(Random &rnd,RandomWalk &RW, double &acc_rate, bool ground,bool gauss){
 
 		vec old_pos = RW.Get_position();
 		double r_old = RW.GetDistance();
 double a_0=1;
-		RW.Step_unif();
+		if (gauss) RW.Step_gauss();
+		else RW.Step_unif();
 		double r_new = RW.GetDistance();
 
 		double p_old,p_new;
@@ -61,143 +62,93 @@ double a_0=1;
 
 int main(){
 
-vec step_length={0.7,2.3};
+vec step_length={1.2,2.9}; //for uniform
+//vec step_length={0.85,1.75}; /for gauss
 
 
-int Nblocks= 1;
+int Nblocks= 100;
 
-int Nsteps=100000;
+int Nsteps=1000000;
+
 ofstream outa ("acceptance1s.csv");
 outa<<"step_length\tacceptance"<<endl;
 
 ofstream outa2 ("acceptance2p.csv");
 outa2<<"step_length\tacceptance"<<endl;
 
-
-for (int k = 0; k<10;k++){
+//for (int n=0;n<10;n++) { //optimal acceptance cycle
 Random rnd;
 rnd.RandomSetup();
 
 ofstream out("1s.csv");
-ofstream outr("r_ave.csv");
-outr<<"block\tave\tprog_ave\terr"<<endl;
 out<<"x\ty\tz\tr"<<endl;
 
 ofstream outp("2p.csv");
-
 outp<<"x\ty\tz\tr"<<endl;
+
+ofstream outr1("r_ave1s.csv");
+outr1<<"block\tave\tprog_ave\terr"<<endl;
+
+ofstream outr2("r_ave2p.csv");
+outr2<<"block\tave\tprog_ave\terr"<<endl;
+
 statistics stat;
 vec acc_rate= zeros(2);
 
-double r_ave =0;
-double r_ave2 =0;
-//for (int j=0; j<Nblocks;j++){
-	double block_ave =0;
-	vec start = zeros(3);
-	for (int i=0;i<3;i++){start[i]=20.;}
+vec r_ave = zeros(2);
+ vec r_ave2 = zeros(2);
+	
+		vec start = zeros(3);
+	for (int i=0;i<3;i++){start[i]=0.;}
 	
 	RandomWalk RW1s(rnd,start,step_length[0]);
 	RandomWalk RW2p(rnd,start,step_length[1]);
 	
+for (int j=0; j<Nblocks;j++){
+
+vec block_ave =zeros(2);
 	for (int i=0; i<Nsteps; i++){ //steps of RW
 		
-		Metropolis_Step(rnd,RW1s,acc_rate[0],1);
-		Metropolis_Step(rnd,RW2p,acc_rate[1],0);
-		for (int k=0;k<3;k++) {
+		Metropolis_Step(rnd,RW1s,acc_rate[0],1,0);
+		Metropolis_Step(rnd,RW2p,acc_rate[1],0,0);
+		
+		/*
+				for (int k=0;k<3;k++) {
 			out<<RW1s.Get_position()[k]<<"\t";
 			outp<<RW2p.Get_position()[k]<<"\t";
 		}
 		out<<RW1s.GetDistance()<<endl;
 		outp<<RW2p.GetDistance()<<endl;
-		//block_ave =+ RW.GetDistance();
+		*/
+		block_ave[0] += RW1s.GetDistance();
+		block_ave[1] += RW2p.GetDistance();
 
-//block_ave+=position;
 }
-r_ave =+ block_ave/Nsteps;
-r_ave2 =+ block_ave*block_ave;
-double err = stat.error(r_ave, r_ave2,Nsteps);
-//outr<<j<<"\t"<<block_ave<<"\t"<<r_ave<<"\t"<<err<<endl;
-//out<<position[0]<<"\t"<<position[1]<<"\t"<<position[2]<<"\t"<<sqrt(dot(position,position))<<endl;
-//global_ave += block_ave/Nsteps;
-//out<<global_ave[0]<<'\t'<<global_ave[1]<<'\t'<<global_ave[2]<<'\t'<<norm(global_ave)<<endl;
-//}
-acc_rate /=Nsteps*Nblocks;
+cout<<"Block "<<j<<"completed"<<endl;
+vec err = zeros(2);
+for (int l=0; l<2;l++){
+	double ave = block_ave[l]/double(Nsteps);
+	r_ave[l] += ave ;
+	r_ave2[l] += ave*ave;
+	err[l] = sqrt((r_ave2[l]/double(j+1)-pow(r_ave[l]/double(j+1),2))/double(j+1));
+}
 
+outr1<<j<<"\t"<<block_ave[0]/double(Nsteps)<<"\t"<<r_ave[0]/double(j+1)<<"\t"<<err[0]<<endl;
+outr2<<j<<"\t"<<block_ave[1]/double(Nsteps)<<"\t"<<r_ave[1]/double(j+1)<<"\t"<<err[1]<<endl;
+}
+acc_rate[0] /=Nsteps*Nblocks;
+acc_rate[1] /=Nsteps*Nblocks;
 cout<<"acceptance rate 1s: "<<acc_rate[0]<<endl;
 cout<<"acceptance rate 2p: "<<acc_rate[1]<<endl;
 outa<<step_length[0]<<"\t"<<acc_rate[0]<<endl;
 outa2<<step_length[1]<<"\t"<<acc_rate[1]<<endl;
-step_length+=0.1;
 
-}
+cout<<"Average distance 1s: "<<r_ave[0]/double(Nblocks)<<endl;
+cout<<"Average distance 2p: "<<r_ave[1]/double(Nblocks)<<endl;
 
+//step_length +=0.1;
+//}
 return 0;
 }
-/*
 
-double x_start=0.;
-double y_start =0.;
-double z_start=0.;
-
-double pos_x=0.;
-double pos_y=0.;
-double pos_z=0.;
-
-
-const double a_0=1.;
-
-const double N_bins=20;
-const double bin_size= 2.*a_0/N_bins;
-
-
-ofstream out("Orbital_1s.csv");
-ofstream outh ("Distances.csv");
-ofstream outa ("Acceptance.csv");
-vec histx(N_bins);
-	histx.zeros();
-vec histy(N_bins);
-	histy.zeros();
-vec histz(N_bins);
-	histz.zeros();
-
-double acc_rate = 0;
-
-nblocks = 100;
-nsteps = 100;
-
-for (int i=0;i<nblocks;i++){
-	Random rnd;
-
-	RandomWalk RW(step_length,x_start,y_start,z_start);
-}
-/*
-for (int j=0; j<2; j++){ //Number of random walks
-	vec countx(N_bins);
-	countx.zeros();
-	vec county(N_bins);
-	vec countz(N_bins);
- 
-		/*
-		for (int k=0; k<N_bins; k++){
-			//if ((RW.Get_x()) >(k*bin_size) && RW.GetD_x()<(k*bin_size+bin_size)) count(k)++;
-			//if (RW.GetDistance()>(k*bin_size) && RW.GetDistance()<(k*bin_size+bin_size)) count(k)++;
-		out<<RW.Get_x()<<"\t"<<RW.Get_y()<<"\t"<<RW.Get_z()<<endl;
-		}
-	}
-	for(int k=0; k<N_bins;k++) {
-		//out<<count(k)<<"\t";
-		//out<<endl;
-	//	hist(k)+= count(k);
-	}
-*/
-
-/*
-for (int k=0; k<N_bins;k++){
-	out<<k<<"\t"<<hist(k)<<endl;
-}
-
-*/
-
-
-//cout<<"Acceptance rate: "<<acc_rate/double(Nsteps)<<endl;
 

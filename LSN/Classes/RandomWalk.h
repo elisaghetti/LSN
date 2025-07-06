@@ -53,6 +53,7 @@ class RandomWalk {
 		void Step_3D ();//random direction,fixed step length
 		void Step_Lattice ();//fixed step length on fixed axis
 		void Step_unif(); //random direction, random step length
+		void Step_gauss(); //random direction, random step length
 		
 
 		//void Step_3D (std::vector <double> pos_x, std::vector <double> pos_y, std::vector <double> pos_z, std::string file);
