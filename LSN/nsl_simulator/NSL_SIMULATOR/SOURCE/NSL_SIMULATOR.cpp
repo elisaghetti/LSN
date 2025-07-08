@@ -10,7 +10,6 @@ _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 
 #include <iostream>
 #include "system.h"
-//#include "equilibration.h"
 #include "color.h"
 using namespace std;
 

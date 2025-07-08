@@ -107,11 +107,12 @@ double System :: Force(int i, int dim){ //forza agente sullla particella i lungo
 
 void System :: move(int i){ // Propose a MC move for particle i
   if(_sim_type == 3){ //Gibbs sampler for Ising
-   double  delta_E = 2.0 * _particle(i).getspin() * 
+   double  delta_E = 2.0 * 
                  ( _J * (_particle(this->pbc(i-1)).getspin() + _particle(this->pbc(i+1)).getspin() ) + _H ); 
   double p = 1./(1.+exp(-_beta*delta_E));
   double r = _rnd.Rannyu();
-  if (r>p) _particle(i).flip();
+  if (r<p) _particle(i).setspin(1);
+  else _particle(i).setspin(-1);
     }
 
 
@@ -221,7 +222,7 @@ void System :: initialize(){ // Initialize the System object according to the co
     } 
     else if( property == "RESTART" ){
       input >> _restart;
-    } step
+    } 
     else if( property == "TEMP" ){
       input >> _temp;
       _beta = 1.0/_temp;
@@ -481,7 +482,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         index_property++;
         //_ptail = 0.0; // TO BE FIXED IN EXERCISE 7
         _ptail = (32.*M_PI*_rho)*(1./double(9*pow(_r_cut,9))-1./double(6*pow(_r_cut,3))); 
-        cout<<"ptail: "<<_ptail<<endl;
+       
       } else if( property == "GOFR" ){
         //ofstream coutgr("../OUTPUT/gofr.dat");
 
@@ -557,10 +558,10 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         coutCV << "TEMPERATURE\tCV_AVE\tERROR" << endl;
         coutCV.close();
 
-        _nprop++;
+        _nprop+=2;
         _measure_cv = true;
         _index_cv = index_property;
-        index_property++;
+        index_property+=2;
       } else if( property == "SUSCEPTIBILITY" ){
         ofstream coutpr("../OUTPUT/susceptibility.csv");
         coutpr << "#\tBLOCK:\tACTUAL_X:\tX_AVE:\tERROR:" << endl;
@@ -601,7 +602,6 @@ void System :: initialize_properties(){ // Initialize data members used for meas
 
 void System:: CheckSizes(){
   cout<<"Nprop:" <<_nprop<<endl;
-  cout<<"Nbinsv "<< _n_bins_v<<endl;
   cout<<"Index T: "<<_index_temp<<endl;
   cout<<"Index K: "<<_index_kenergy<<endl;
   cout<<"Index pofv: "<<_index_pofv<<endl;
@@ -741,7 +741,7 @@ void System :: measure(){ // Measure properties
   double penergy_temp=0.0, dr; // temporary accumulator for potential energy
   double kenergy_temp=0.0; // temporary accumulator for kinetic energy
   double tenergy_temp=0.0;
-  double cv_temp=0.0;
+  double cv_temp=0.; //contains <H^2> and <H>^2
   double H_temp=0.0;
   double H2_temp=0.0;
   double chi_temp =0.0;
@@ -827,18 +827,16 @@ void System :: measure(){ // Measure properties
     // SPECIFIC HEAT /////////////////////////////////////////////////////////////
 if (_measure_cv){
   if (_sim_type < 2) cerr<<"Susceptibility measurement is only possible for Ising simulations";
-  
     else { 
-      double s_i, s_j;
+        double s_i, s_j;
       for (int i=0; i<_npart; i++){
         s_i = double(_particle(i).getspin());
         s_j = double(_particle(this->pbc(i+1)).getspin());
-        H_temp += - _J * s_i * s_j - 0.5 * _H * (s_i + s_j);
-        H2_temp+= pow (-_J * s_i * s_j - 0.5 * _H * (s_i + s_j),2);
+        double H = - _J * s_i * s_j - 0.5 * _H * (s_i + s_j);
+        cv_temp += H;
       }
-     // cv_temp = _beta*_beta*((H2_temp/double(_npart))-(pow(H_temp/(double(_npart)),2)));
-      cv_temp = _beta*_beta*(H2_temp/double(_npart)-pow(H_temp/double(_npart),2));
       _measurement(_index_cv) = cv_temp;
+      _measurement(_index_cv+1) = cv_temp*cv_temp;
     }
   }
 
@@ -851,32 +849,17 @@ if (_measure_cv){
   } 
     
     
-  // PRESSURE //////////////////////////////////////////////////////////////////
+  // PRESSURE ///////////////////////////////////////////////////////////////////////
   if (_measure_pressure) _measurement[_index_pressure] = _rho * (2.0/3.0) * kenergy_temp + (_ptail*_npart + 48.0*virial/3.0)/_volume;
-  // MAGNETIZATION /////////////////////////////////////////////////////////////
-   if (_measure_magnet){
-    if (_sim_type < 2) cerr<<"Susceptibility measurement is only possible for Ising simulations";
- 
-    else { 
-      //Set_h(0.02);
-      double s_i;
-      for (int i=0; i<_npart; i++){
-        s_i = double(_particle(i).getspin());
-        magn_temp += s_i;
-      }
-      magn_temp/=_npart;
-      _measurement(_index_magnet) = magn_temp;
-      //Set_h(0.0);
-    }
+  // MAGNETIZATION //////////////////////////////////////////////////////////////////
 
-  }
 
 // TO BE FIXED IN EXERCISE 6
   // SUSCEPTIBILITY ////////////////////////////////////////////////////////////
     if (_measure_chi){
     if (_sim_type < 2) cerr<<"Susceptibility measurement is only possible for Ising simulations";
     else { 
-      double s_i, s_j;
+      double s_i;
       for (int i=0; i<_npart; i++){
         s_i = double(_particle(i).getspin());
         chi_temp += s_i;
@@ -887,9 +870,9 @@ if (_measure_cv){
 
   }
 // TO BE FIXED IN EXERCISE 6
-
+  
   _block_av += _measurement; //Update block accumulators (valori istantanei)
-
+ 
   return;
 }
 
@@ -900,8 +883,13 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
   double average, sum_average, sum_ave2;
 
 
-  
+
   _average     = _block_av / double(_nsteps); 
+  double cv_ave=0;
+  if (_measure_cv){
+  cv_ave = _beta*_beta*(_average[_index_cv+1]-pow(_average[_index_cv],2))/(_npart);
+  _average[_index_cv]=cv_ave;
+  }
   _global_av  += _average;
   _global_av2 += _average % _average; // % -> element-wise multiplication: di 2 vettori faccio il prodotto componente per componente equivalente, e ottengo un vettore dei prodotti
 
@@ -995,8 +983,8 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
     if (_measure_cv){
     //coutf.open("../OUTPUT/total_energy.dat",ios::app);
     coutf.open("../OUTPUT/specific_heat.csv",ios::app);
-    average  = _average(_index_cv);
-    sum_average = _global_av(_index_cv);
+    average  = cv_ave;
+    sum_average = _global_av[_index_cv];
     sum_ave2 =  _global_av2(_index_cv);
     coutf << "\t" << blk
           << "\t"  << average
@@ -1170,8 +1158,9 @@ void System::Set_Temp(double T){
 }
 
 double System::Get_Temp(){
-  if (_measurement(_index_temp) != 0)return _measurement(_index_temp);
-    else return _temp;
+  //if (_measurement(_index_temp) != 0)return _measurement(_index_temp);
+   // else return _temp;
+    return _temp;
 }
 void System::Set_Restart (double R){
   _restart =R;

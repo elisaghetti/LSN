@@ -2,10 +2,10 @@ CC = g++
 CFLAGS = -O3 --std=c++11
 AFLAGS = -larmadillo
 all: simulator.exe
-simulator.exe : system.o ex4.o particle.o random.o
-	$(CC) system.o particle.o random.o ex4.o -o simulator.exe $(AFLAGS)
-ex4.o : ex4.cpp system.h particle.h color.h 
-	$(CC) -c ex4.cpp -o ex4.o $(CFLAGS)
+simulator.exe : system.o ex6.o particle.o random.o
+	$(CC) system.o particle.o random.o ex6.o -o simulator.exe $(AFLAGS)
+ex6.o : ex6.cpp system.h particle.h color.h 
+	$(CC) -c ex6.cpp -o ex6.o $(CFLAGS)
 system.o : system.cpp system.h random.h particle.h color.h
 	$(CC) -c system.cpp -o system.o $(CFLAGS)
 particle.o : particle.cpp particle.h
