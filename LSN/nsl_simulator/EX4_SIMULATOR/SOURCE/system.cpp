@@ -435,9 +435,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         
         _measure_penergy = true;
         index_property++;
-       // _vtail = 0.0; // TO BE FIXED IN EXERCISE 7
-         double A = 8.*M_PI*_rho;
-        _vtail = A/double(9*pow(_r_cut,9))-A/double(3*pow(_r_cut,3)); //manca epsilon?
+        _vtail = 0.0; // TO BE FIXED IN EXERCISE 7
         
 
       } else if( property == "KINETIC_ENERGY" ){
@@ -482,8 +480,8 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         _measure_pressure = true;
         _index_pressure = index_property;
         index_property++;
-        //_ptail = 0.0; // TO BE FIXED IN EXERCISE 7
-        _ptail = (32.*M_PI*_rho)*(1./double(9*pow(_r_cut,9))-1./double(6*pow(_r_cut,3))); 
+        _ptail = 0.0; // TO BE FIXED IN EXERCISE 7
+        
        
       } else if( property == "GOFR" ){
         //ofstream coutgr("../OUTPUT/gofr.dat");

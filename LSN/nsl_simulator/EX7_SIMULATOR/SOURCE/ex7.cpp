@@ -42,7 +42,7 @@ int main (int argc, char *argv[]){
     if (SYS.Get_symtype()==1){
 
       //TO DETERMINE ACCEPTANCE
-      
+      /*
       for (int i=0; i<SYS.get_nbl();i++){
         for (int j=0;j<SYS.get_nsteps();j++){
         SYS.step();
@@ -54,13 +54,13 @@ int main (int argc, char *argv[]){
         cout<<SYS.get_delta()<<endl;
       }
 
-
+*/
       cout<<YELLOW<<"Equilibration started at energy "<<SYS.Get_PE()<<endl;
     
     ofstream out;
    out.open("../OUTPUT/Equilibration_MC.csv");
     out<<"Step\tEnergy"<<endl;
-    for (int i=0;i<5000;i++){
+    for (int i=0;i<3000;i++){
 
         SYS.step();
         SYS.measure();
@@ -78,7 +78,7 @@ int main (int argc, char *argv[]){
      // out<<i*SYS.get_nsteps()+j;
       SYS.step();
       SYS.measure();
-      if (j%1000==0)cout<<j<<endl;
+     
 
       if(j%50 == 0){ //ne stampa una ogni 50
         //SYS.write_XYZ(nconf); //Write actual configuration in XYZ format //Commented to avoid "filesystem full"!  
@@ -87,7 +87,7 @@ int main (int argc, char *argv[]){
     }
 
   SYS.averages(i+1);
-  cout<<"Block "<<i+1<<" completed"<<endl;
+ if (i%5000==0) cout<<"Block "<<i+1<<" completed"<<endl;
 
    SYS.block_reset(i+1);
    
