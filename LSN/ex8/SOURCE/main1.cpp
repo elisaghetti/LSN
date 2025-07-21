@@ -5,11 +5,9 @@
 #include <cmath>
 #include <armadillo>
 #include <random.h>
-#include <autodiff/forward/forward.hpp>
 
 using namespace std;
 using namespace arma;
-using namespace autodiff;
 
 double H_1s(double a_0, double r){
 	return exp(-2*r/(a_0));
@@ -19,9 +17,9 @@ double H_2p (double a_0, double r, double theta){
 	return (1./8.)*sqrt(2./(M_PI*pow(a_0,5)))*r*exp(-r/(2.*a_0))*cos(theta);
 }
 double psi_T(double mu,double sigma,double x){
-	double normalization = 2.*sigma*sqrt(M_PI)*(1+exp(-mu*mu/(sigma*sigma)));
-	double psi = exp(-pow(x-mu,2)/(2*sigma*sigma)) +exp(-pow(x+mu,2)/(2*sigma*sigma));
-	return psi*psi/double(normalization);
+	
+	return exp(-pow(x-mu,2)/(2*sigma*sigma)) +exp(-pow(x+mu,2)/(2*sigma*sigma));
+
 }
 
 
@@ -48,10 +46,10 @@ double Hpsi (double mu, double sigma, double x){
 void Metropolis_Step(Random& rnd, double &position,double step_length,double &acc_rate, double mu, double sigma){
 	
 	double old_pos = position;
-
+double normalization = 2.*sigma*sqrt(M_PI)*(1+exp(-mu*mu/(sigma*sigma)));
 	double new_pos=old_pos+step_length*rnd.Rannyu(-1,1);
-	double p_old = psi_T(mu,sigma,old_pos);
-	double p_new = psi_T(mu,sigma,new_pos);
+	double p_old = pow(psi_T(mu,sigma,old_pos),2)/double(normalization);
+	double p_new = pow(psi_T(mu,sigma,new_pos),2)/double(normalization);
 	double T_bkw=1.;
 	double T_fwd =1.;
 
@@ -84,7 +82,7 @@ int main(){
 
 double step_length=2.75;
 
-int Nblocks= 100;
+int Nblocks= 50;
 
 int Nsteps=10000;
 
