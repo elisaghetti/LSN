@@ -11,7 +11,7 @@ _/    _/  _/_/_/  _/_/_/_/ email: Davide.Galli@unimi.it
 #ifndef __Particle__
 #define __Particle__
 
-#include <armadillo>
+#include <armadillo>  //contiene oggetto vec
 #include "random.h"
 
 using namespace std;
@@ -21,20 +21,21 @@ class Particle {
 
 private:
   const int _ndim = 3; // Dimensionality of the system
-  int _spin;            // Spin of the particle (+1 or -1)
-  vec _x;               // Current position vector
-  vec _xold;            // Previous position vector (used in moveback())
+  int _spin;            // Spin of the particle (+1 or -1) NON SERVE PER ES 4
+  vec _x;               // Current position vector (3 coordinate)
+  vec _xold;            // Previous position vector (used in moveback()) (3 coordinate)
   vec _v;               // Velocity vector
 
 public: // Function declarations
   void initialize();                      // Initialize particle properties
   void translate(vec delta, vec side);   // Translate the particle within the simulation box
-  void flip();                           // Flip the spin of the particle
+  void flip();                           // Flip the spin of the particle NON SERVE PER ES 4
   void moveback();                       // Move particle back to previous position
   void acceptmove();                     // Accept the proposed move and update particle properties
-  int  getspin();                        // Get the spin of the particle
-  void setspin(int spin);                // Set the spin of the particle
-  double getposition(int dim, bool xnew);// Get the position of the particle along a specific dimension
+  int  getspin();                        // Get the spin of the particle NON SERVE PER ES 4
+  void setspin(int spin);                // Set the spin of the particle  NON SERVE PER ES 4
+  double getposition(int dim, bool xnew);// Get the position of the particle along a specific dimension //bool = true pos nuova, =falsopos vecchia
+
   void   setposition(int dim, double position); // Set the position of the particle along a specific dimension
   void   setpositold(int dim, double position); // Set the previous position of the particle along a specific dimension
   double getvelocity(int dim);           // Get the velocity of the particle along a specific dimension
