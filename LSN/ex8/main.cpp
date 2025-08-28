@@ -6,76 +6,134 @@
 #include <armadillo>
 #include <random.h>
 #include "lib.h"
+
 using namespace std;
 using namespace arma;
 
 
-int main(){
+int main(int argc, char **argv){
 
-double beta_start =0.2; //starting temperature
-
-int ann_steps =30;
-int Nsteps = 100;
-int Nblocks = 10;
-Random rnd;
-rnd.RandomSetup();
-
-simulated_annealing(beta_start,ann_steps,Nsteps,Nblocks,rnd);
-
-
-
-////8.1
-/*
-double step_length=2.75;
-
-int Nblocks= 50;
-
-int Nsteps=10000;
-
-ofstream outa ("..OUTPUT/acceptance.csv");
-outa<<"step_length\tacceptance"<<endl;
-//for (int k = 0; k<10;k++){
-Random rnd;
-rnd.RandomSetup();
-double mu =0.85;
-double sigma =0.65;
-
-
-
-ofstream outr("../OUTPUT/ave.csv");
-outr<<"block\tintegral\tprog_ave\terr"<<endl;
-//!!!!!KEEP COMMENTED WHEN DOING BLOCK SIMULATIONS!!!!!!!!!!!!!!!!!!!!
-//ofstream out ("../OUTPUT/psi_sampling.csv");
-//out<<"step\tx"<<endl;
-
-double position = 0;
-double block_ave =0;
-double block_ave2 =0;
-double acc_rate=0;
-Equilibration(rnd,position,step_length,acc_rate,mu,sigma,2000);
-
-for (int j=0; j<Nblocks;j++){
 	
-	
-	double integral =0.;
+	if (argc != 2 or atof(argv[1])>2) cerr <<"input from command line: 1 fpr 8.1, 2 for 8.2"<<endl;
+//EXERCISE 8.1////////////////////////////////////////////////////////////////////////
+	if (atof(argv[1])==1) {
+		cout<<"Input initial guess for mu and sigma parameters: "<<endl;
+		SApar init_par;
+		cin>>init_par.mu>>init_par.sigma;
+		init_par.set_norm();
+		Random rnd;
+		rnd.RandomSetup();
 
-	for (int i=1; i<Nsteps; i++){ //steps of RW
-		double old_pos = position;
-		//out<<i<<"\t"<<position<<endl;
-		Metropolis_Step(rnd,position,step_length,acc_rate,mu,sigma);
-		integral+= Hpsi(mu,sigma,position)/psi_T(mu,sigma,position);	
+		//acceptance study during equilibration
+		metro trial;
+	
+		metro pos_sampler;
+			/*
+		string eq_file = "./OUTPUT/acceptance.csv";
+		Equilibration(rnd,trial,init_par,2000,eq_file);
+		*/
+
+		//sampling
+		int sampling_nsteps=10000;
+		
+	
+		string sampling_file ="./OUTPUT/psi_sampling_correct.csv";
+		
+		sample_psi(rnd,pos_sampler,init_par,sampling_nsteps,sampling_file);
+	
+	//EVALUATION OF <H>
+		data_blocking H_blocks;
+		H_blocks.Nblocks= 50;
+		H_blocks.Nsteps= 100000;
+
+		metro H_eval;
+
+		string ave_file = "./OUTPUT/ave_correct.csv";
+		
+		compute_mean_H(rnd,H_eval,H_blocks,init_par,ave_file);
+
+return 0;
 	}
-	
-	double ave = integral/double(Nsteps);
-	block_ave += ave;
-	block_ave2 += ave*ave;
-	double err = sqrt((block_ave2/double(j+1)-pow(block_ave/double(j+1),2))/double(j+1));
 
-	outr<<j<<"\t"<<integral/double(Nsteps)<<"\t"<<block_ave/double(j+1)<<"\t"<<err<<endl;
+	
+//EXERCISE 8.2//////////////////////////////////////////////////////////////////////////////////////////
+if (atof(argv[1])==2){
+double beta_start =0.2; //starting temperature
+double beta_max =50.;
+
+Random rnd;
+rnd.RandomSetup(); 
+
+
+
+//int temp_steps =50;
+int temp_step =0.;
+
+SApar old_par;
+old_par.mu =1.;
+old_par.sigma=1.;
+old_par.set_norm();
+
+metro H_eval;
+
+	data_blocking H_blocks; //data blocking struct for H evaluation, members are resetted every time <H> is computed
+	H_blocks.Nblocks = 20;
+	H_blocks.Nsteps = 5000;
+
+compute_mean_H(rnd,H_eval,H_blocks,old_par);
+old_par.meanH=H_blocks.block_ave/double(H_blocks.Nblocks);
+
+	ofstream out ("./OUTPUT/SAenergy_lin.csv");
+	out<<"beta\tmeanH_ave\tstd_dev\tmeanH_best\tbest_err\tmeanH_last\tlast_err"<<endl;
+
+	ofstream out1 ("./OUTPUT/SApars_lin.csv");
+	out1<<"beta\tmu\tsigma"<<endl;
+cout<<"begin temp cycle"<<endl;
+
+int Nsteps=1000;
+//for(int i=0;i<temp_steps;i++) {//H evaluation blocks
+while(beta_start<beta_max){
+	temp_step++;
+	//SA_blocks.Nblocks*=(beta_start
+	
+	vec results =annealing_step(rnd,Nsteps,H_eval,beta_start,old_par,H_blocks);
+	//SA_blocks.increment(SA_blocks.Nblocks-1);
+	
+	//cout<<SA_blocks.Nblocks<<" "<<" "<<SA_blocks.block_ave/SA_blocks.Nblocks<<" "<<SA_blocks.err<<endl;
+	out<<beta_start<<"\t"<<results[0]<<"\t"<<results[1]<<"\t"<<results[2]<<"\t"<<results[3]<<"\t"<<old_par.meanH<<"\t"<<H_blocks.err<<endl;
+	out1<<beta_start<<"\t"<<old_par.mu<<"\t"<<old_par.sigma<<endl;
+	cout<<"step "<<temp_step<<"beta: "<<beta_start<<" ave meanH: "<<results[0]<<" bets meanH"<<results[2]<<endl;
+
+	beta_start+=0.8;
+}
+	
+
+
+
+
+//SApar fin_par = simulated_annealing(beta_start,temp_steps,Nsteps,Nblocks,rnd);
+
+cout<<"Final result: "<<endl;
+cout<<"<H>: "<<old_par.meanH<<" error: "<<H_blocks.err<<endl;
+cout<<"mu: "<<old_par.mu<<endl;
+cout<<"sigma: "<<old_par.sigma<<endl;
+old_par.set_norm();
+string file= "./OUTPUT/final_guess_ave_lin.csv";
+
+metro final_Heval;
+data_blocking final_Hblocks;
+final_Hblocks.Nblocks=50;
+final_Hblocks.Nsteps=10000;
+
+compute_mean_H(rnd,final_Heval,final_Hblocks,old_par,file);
+
+string sampling_file = "./OUTPUT/final_sampling_lin.csv";
+
+metro pos_sampler;
+sample_psi(rnd,pos_sampler,old_par,10000,sampling_file);
+
 
 }
-	acc_rate/=( Nsteps*Nblocks);
-cout<<"acceptance rate: "<<acc_rate<<endl;
-*/
 return 0;
 }
+
