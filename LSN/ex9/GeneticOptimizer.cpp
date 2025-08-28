@@ -7,41 +7,67 @@
 
 using namespace std;
 using namespace arma;
-/*
-void GeneticOptimizer::assign_positions(Random &rnd,int sim_type,int index,chromosome &ch){
-			if (_simtype ==0){
-			cout<<"Simulating "<<_ngenes<<" on a circle";
-			double dtheta = 2*M_PI/(double(_Ngenes));
-			double theta =dtheta*index.;
-			for (int i=0;i<_ngenes;i++){
-				double x =cos(theta);
-				double y=sin(theta);
-				theta += dtheta;
-				chromosome ch= _population.col(i);
-				ch.assign_position()
-			_positions(0,i) = x;
-			_positions(1,i)= y;
-			}
-		}
-}
-void GeneticOptimizer::create_starting_population(Random &rnd,int sim_type){
-  chromosome ch;
-  cout<<_Ngenes<<endl;
-		ch.initialize(_Ngenes,sim_type);
-    
-		for (int i=1;i<_Ngenes;i++) ch.set_element(i,i);
 
-    cout<<"chekc"<<endl;
-   cout<<ch.get_vector()<<endl;
+
+
+void GeneticOptimizer::create_starting_population(Random &rnd){
+  chromosome ch;
+
+		ch.initialize(_Ngenes,_simtype);
+		ch.assign_positions();
 		for (int i=0; i<_population_size;i++){
 		int n_perm = int(rnd.Rannyu(0,_Ngenes+1));//number of permutations
-		//cout<<n_perm;
+		
 		chromosome new_ch = ch;
 		for(int j=0;j<n_perm;j++) new_ch.permutation(rnd);
-		_population.col(i)=new_ch.get_vector();
+		_population(i)=new_ch;
 		new_ch.check_bonds();
-		
 	}
-	cout<<_population<<endl;
 
-	}*/
+
+	}
+
+	void GeneticOptimizer::print_configuration(){
+		ofstream out("./OUTPUT/positions.csv");
+	out<<"ch_index\tindex\tx\ty"<<endl;
+	for (int i=0; i<_population_size;i++){
+		for (int j=0; j<_Ngenes+1;j++){
+			out<<i<<"\t"<<_population(i).get_gene(j).index<<"\t"<<_population(i).get_gene(j).position[0]<<"\t"<<_population(i).get_gene(j).position[1]<<endl;
+		}
+
+	}
+	out.close();
+}
+
+void GeneticOptimizer::sort_population(){
+	vec fitness_values = zeros(_population_size);
+	for (int i=0;i<_population_size;i++){
+		_population(i).compute_fitness();
+		fitness_values[i]= _population(i).get_fitness();
+	}
+
+	uvec sorted_indices = sort_index(fitness_values,"descend");
+
+		field <chromosome> sorted_population = _population;
+		for (int i=0;i<_population_size;i++){
+			int index = sorted_indices[i];
+			sorted_population(i)=_population(index);
+	}
+	_population= sorted_population;
+}
+
+void GeneticOptimizer::check_order(){
+	vec fitness_values = zeros(_population_size);
+	for (int i=0;i<_population_size;i++){
+		_population(i).compute_fitness();
+		fitness_values[i]= _population(i).get_fitness();
+	}
+
+	if (fitness_values.is_sorted("descend")) cout<<"population sorted succesfully"<<endl;
+	else cerr<<"sorting error"<<endl;
+
+}
+
+int GeneticOptimizer::selection(){
+	
+}

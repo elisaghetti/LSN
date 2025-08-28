@@ -38,8 +38,11 @@ int main () {
 	int population_size=5;
 
 	GeneticOptimizer gen;
-	gen.initialize(N_cities,population_size);
-	gen.create_starting_population(rnd,0);
+	gen.initialize(0,N_cities,7);
+	gen.create_starting_population(rnd);
+	gen.print_configuration();
+	gen.sort_population();
+	gen.check_order();
 
 	/*
 	vec chromosome = zeros (N_cities+1);

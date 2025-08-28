@@ -21,21 +21,25 @@ class GeneticOptimizer {
 private:
 	int _population_size;
 	int _Ngenes;
-	//mat _population;
+	int _simtype;
 	field <chromosome> _population;
-
 
 
 public:
 	GeneticOptimizer(){};
 	 ~GeneticOptimizer(){};
-	void initialize(int ngenes, int size){
+	void initialize(int sim_type,int ngenes, int size){
 		_Ngenes=ngenes;
 		_population_size=size;
-
-		_population = zeros(_population_size);
+		_simtype=sim_type;
+		_population.set_size(_population_size);
+		
 	};
+	
+	void create_starting_population(Random &rnd);
+	void print_configuration();
+	void sort_population();
+	void check_order();
 
-	//void create_starting_population(Random &rnd,int sim_type);
 };
 #endif 
