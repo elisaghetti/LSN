@@ -70,4 +70,48 @@ void chromosome::compute_fitness(){
 	}
 	_fitness=L1;
 }
+void chromosome::print_configuration(){
+	for (int i=0;i<_ngenes+1;i++){
+		cout<<_chromosome(i).index;
+	}
+	cout<<endl;
+}
 
+vec chromosome::get_indices_vector(){
+	vec indices = zeros(_ngenes+1);
+	for (int i=0;i<_ngenes+1;i++)indices(i)=_chromosome(i).index;
+
+return indices;
+}
+//MUTATIONS///////////////////////////
+
+void chromosome::shift_cities(Random &rnd){
+	int c1 = int (rnd.Rannyu(1,_ngenes-1));
+	cout<<c1<<"\t";//prima città del blocco da spostare
+	int c2 = int (rnd.Rannyu(c1,_ngenes-1));
+	cout<<c2<<"\t"; //ultima cttà del blocco
+	int Nshifted = c2-c1+1;
+
+	int shift_length = int(rnd.Rannyu(0,_ngenes-1-c2));
+	cout<<shift_length<<endl;
+	
+	//work on indices vector
+	vec cities = get_indices_vector();
+	vec block = cities.subvector(c1,c2);
+	vec before = cities.subvector(0,c1-1);
+	vec after = cities.subvector(c2+1,_ngenes);
+	
+	if(before.size()>0&& after.size()>0)vec tmp = join_vert(before,after);
+	else if (before.size()>0) vec tmp = before;
+	else  vec tmp=after;
+
+	int newpos= c1+shift_length;
+	vec newbefore = (newpos>0)?tmp.subvec(0,newpos-1) : vec();
+	vec newafter= (newpos<tmp.n_elem)? tmp.subvec(newpos,tmp.n_elem-1);
+	vec result;
+	if(newbefore.n_elem>0)result= newbefore;
+	if(block.nelem>0) result = (result.nelem >0)
+
+	
+
+}

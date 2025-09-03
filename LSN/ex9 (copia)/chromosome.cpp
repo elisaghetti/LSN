@@ -1,0 +1,151 @@
+#include <cmath>
+#include <cstdlib>
+#include <string>
+#include <armadillo>
+#include "chromosome.h"
+
+using namespace std;
+using namespace arma;
+
+
+void chromosome::assign_positions(){
+		if (_simtype ==0){
+	
+			double dtheta = 2*M_PI/(double(_ngenes));
+			double theta =0.;
+			for (int i=0;i<_ngenes;i++){
+				vector <double> pos;
+				pos.push_back(cos(theta));
+				pos.push_back(sin(theta));
+				theta += dtheta;
+				_chromosome[i].position = pos;
+
+			}
+			_chromosome[_ngenes].position = _chromosome[0].position;
+		}
+	}
+
+void chromosome::permutation(Random &rnd){
+    
+	int rand_index1,rand_index2;
+	do{
+	rand_index1 = int(rnd.Rannyu(1,_ngenes));
+	rand_index2 = int(rnd.Rannyu(1,_ngenes));
+	} while(rand_index1==rand_index2);
+	gene val = _chromosome[rand_index1];
+
+		_chromosome[rand_index1]=_chromosome[rand_index2];
+		_chromosome[rand_index2]=val;
+
+}
+
+void chromosome::check_bonds(){
+	if (_chromosome[0].index!=0 or _chromosome[_ngenes].index!=0) cerr<<"chromosome error: first and last city must have both index 0"<<endl;
+	vec count_el = zeros(_ngenes);
+	for (int i=0;i<_ngenes-1;i++){
+		for (int j=0;j<_ngenes-1;j++){
+			if(_chromosome[j].index==i)count_el[i]++;
+		}
+	if (count_el[i]>1) cerr<<"chromosome error: city "<<i<<"is repeated "<<count_el[i]<<" times"<<endl;
+	}
+	if(_chromosome[0].position[0]!= _chromosome[_ngenes].position[0] or _chromosome[0].position[1]!= _chromosome[_ngenes].position[1])cerr<<"First and last positions must be fixed and the same"<<endl;
+
+
+}
+
+double chromosome::get_distance(int i1,int i2){
+
+	double dx= _chromosome[i1].position[0] -_chromosome[i2].position[0];
+	double dy=_chromosome[i1].position[1] -_chromosome[i2].position[1];
+
+	return sqrt(dx*dx+dy*dy);
+	
+
+}
+
+void chromosome::compute_fitness(){
+	double L1=0.;
+	for (int i=0; i<_ngenes;i++){
+		L1+= get_distance(i,i+1);
+	}
+	_fitness=L1;
+}
+void chromosome::print_configuration(){
+	for (int i=0;i<_ngenes+1;i++){
+		cout<<_chromosome[i].index;
+	}
+	cout<<endl;
+}
+
+//MUTATIONS///////////////////////////
+
+void chromosome::shift_cities(Random &rnd){
+
+	int c1 = int (rnd.Rannyu(1,_ngenes-1));
+	int c2 = int (rnd.Rannyu(c1+1,_ngenes-1));
+
+	int Nshifted = c2-c1+1;
+
+	int shift_length = int(rnd.Rannyu(0,_ngenes-c2));
+	cout<<shift_length<<endl;
+
+	vector <gene> copy = _chromosome;
+	vector <gene> block (copy.begin()+c1,copy.begin()+c2+1);
+
+	copy.erase(copy.begin()+c1,copy.begin()+c2+1);
+
+	int new_pos = c1+shift_length;
+	copy.insert(copy.begin()+new_pos,block.begin(),block.end());
+	_chromosome=copy;
+};
+
+void chromosome::inversion(Random &rnd){
+	
+	int bl_start = int(rnd.Rannyu(1,_ngenes-1));
+	int bl_end = int(rnd.Rannyu(bl_start+1,_ngenes));
+	
+	cout<<bl_start<<" "<<bl_end<<endl;
+	
+	reverse(_chromosome.begin()+bl_start,_chromosome.begin()+bl_end+1);
+
+}
+
+void chromosome::block_permutation(Random &rnd){
+	int block_start,block_length,block2_start;
+	bool new_random = false;
+	do{
+	block_length= int(rnd.Rannyu(2,_ngenes/2));
+	block_start = int (rnd.Rannyu(1,_ngenes-block_length+1));
+
+	if(block_start-2-block_length>0) block2_start= int(rnd.Rannyu(1,block_start-1-block_length));
+	else if (_ngenes-block_start-block_length-1>0)block2_start = int(rnd.Rannyu(block_start+block_length+1,_ngenes-block_length));
+	else new_random=true;
+	} while (new_random==true);
+
+	
+	vector <gene> block (_chromosome.begin()+block_start,_chromosome.begin()+block_start+block_length);
+	vector <gene> block2 (_chromosome.begin()+block2_start,_chromosome.begin()+block2_start+block_length);
+
+	_chromosome.erase(_chromosome.begin()+block_start,_chromosome.begin()+block_start+block_length);
+	_chromosome.insert(_chromosome.begin()+block_start,block2.begin(),block2.end());
+
+	_chromosome.erase(_chromosome.begin()+block2_start,_chromosome.begin()+block2_start+block_length);
+	_chromosome.insert(_chromosome.begin()+block2_start,block.begin(),block.end());
+
+
+}
+
+void chromosome::mutation(Random &rnd){
+	double p_perm = 0.1;
+	double p_shift=0.18;
+	double p_inv = 0.24;
+	double p_blockperm =0.28;
+
+	double rand = rnd.Rannyu();
+	if (rand<p_perm) permutation(rnd);
+	if(rand>p_perm && rand<p_perm+p_shift) shift_cities(rnd);
+	if (rand >p_shift && rand <p_shift+p_inv ) inversion(rnd);
+	if(rand>p_inv + p_blockperm) block_permutation(rnd);
+	
+	
+}

@@ -34,15 +34,25 @@ void check_bonds(vec chromosome){
 int main () {
 	Random rnd;
 	rnd.RandomSetup();
-	int N_cities = 7;
-	int population_size=5;
-
+	int N_cities = 34;
+	int population_size=100;
+/*
 	GeneticOptimizer gen;
-	gen.initialize(0,N_cities,7);
+	gen.initialize(0,N_cities,population_size);
 	gen.create_starting_population(rnd);
-	gen.print_configuration();
+	//gen.print_configuration();
 	gen.sort_population();
 	gen.check_order();
+
+	gen.select_parents(rnd);
+*/
+	chromosome ch;
+	ch.initialize(10,0);
+	ch.print_configuration();
+	for (int i=0;i<6;i++){
+		ch.shift_cities(rnd);
+	ch.print_configuration();
+	}
 
 	/*
 	vec chromosome = zeros (N_cities+1);
