@@ -22,8 +22,8 @@ private:
 	int _population_size;
 	int _Ngenes;
 	int _simtype;
-	vector <chromosome> _population;
-	vector <double> _fitness_values;
+	field <chromosome> _population;
+	vec _fitness_values;
 
 
 public:
@@ -33,8 +33,8 @@ public:
 		_Ngenes=ngenes;
 		_population_size=size;
 		_simtype=sim_type;
-
-	
+		_population.set_size(_population_size);
+		_fitness_values = zeros(_population_size);
 		
 	};
 	
@@ -44,7 +44,6 @@ public:
 	void check_order();
 	int selection (Random &rnd);
 	void select_parents(Random &rnd);
-
 
 };
 #endif 

@@ -6,53 +6,49 @@
 using namespace std;
 using namespace arma;
 
-void permutation(Random &rnd,vec &chromosome){
-	int rand_index1,rand_index2;
-	do{
-	rand_index1 = int(rnd.Rannyu(1,chromosome.size()-1));
-	rand_index2 = int(rnd.Rannyu(1,chromosome.size()-1));
-	} while(rand_index1==rand_index2);
-	int val = chromosome[rand_index1];
-	//do{ rand_value = int(rnd.Rannyu(1,chromosome.size()-1));}
-	//while (rand_value==chromosome[rand_index]);
-		chromosome[rand_index1]=chromosome[rand_index2];
-		chromosome[rand_index2]=val;
 
-}
-
-void check_bonds(vec chromosome){
-	if (chromosome[0]!=0 or chromosome[chromosome.size()-1]!=0) cerr<<"chromosome error: first and last city must have both index 0"<<endl;
-	vec count_el = zeros(chromosome.size()-1);
-	for (int i=0;i<chromosome.size()-1;i++){
-		for (int j=0;j<chromosome.size()-1;j++){
-			if(chromosome[j]==i)count_el[i]++;
-		}
-	if (count_el[i]>1) cerr<<"chromosome error: city "<<i<<"is repeated "<<count_el[i]<<" times"<<endl;
-	}
-
-}
 int main () {
 	Random rnd;
 	rnd.RandomSetup();
-	int N_cities = 34;
-	int population_size=100;
-/*
+	int N_cities = 10;
+	int population_size=500;
+	int ngen = 2000;
 	GeneticOptimizer gen;
 	gen.initialize(0,N_cities,population_size);
+	cout<<"initialization"<<endl;
 	gen.create_starting_population(rnd);
-	//gen.print_configuration();
-	gen.sort_population();
-	gen.check_order();
+	cout<<"created population"<<endl;
+	//gen.crossover_g(rnd,1,2);
+	
+	chromosome best_result = gen.optimize(rnd,ngen);
+	cout<<"finished optimization"<<endl;
+	ofstream out ("./OUTPUT/best_path.csv");
+	out<<"n\tindex\tx\ty"<<endl;
 
-	gen.select_parents(rnd);
-*/
+	for (int i=0;i<N_cities;i++){
+		out<<i<<"\t"<<best_result.get_gene(i).get_index()<<"\t"<<best_result.get_gene(i).get_x()<<"\t"<<best_result.get_gene(i).get_y()<<endl;
+	}
+	/*
+	gen.sort_population();
+	//gen.print_configuration(); //uncomment to save paths to a file
+	cout<<"sorted population"<<endl;
+	gen.check_order();
+	//gen.crossover(rnd);
+	//gen.select_parents(rnd);
+	cout<<"selected parents"<<endl;
+	int ngen = 5000;
+	gen.random_search(rnd,ngen);
+	/*
 	chromosome ch;
 	ch.initialize(10,0);
 	ch.print_configuration();
 	for (int i=0;i<6;i++){
-		ch.shift_cities(rnd);
-	ch.print_configuration();
+		//ch.shift_cities(rnd);
+		//ch.inversion(rnd);
+		ch.block_permutation(rnd);
 	}
+	//ch.print_configuration();*/
+	//}
 
 	/*
 	vec chromosome = zeros (N_cities+1);

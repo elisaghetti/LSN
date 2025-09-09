@@ -22,8 +22,8 @@ private:
 	int _population_size;
 	int _Ngenes;
 	int _simtype;
-	field <chromosome> _population;
-	vec _fitness_values;
+	vector <chromosome> _population;
+	vector <double> _fitness_values;
 
 
 public:
@@ -33,8 +33,8 @@ public:
 		_Ngenes=ngenes;
 		_population_size=size;
 		_simtype=sim_type;
-		_population.set_size(_population_size);
-		_fitness_values = zeros(_population_size);
+
+	
 		
 	};
 	
@@ -45,5 +45,8 @@ public:
 	int selection (Random &rnd);
 	void select_parents(Random &rnd);
 
+	void random_search(Random &rnd, int ngen);
+	void crossover_g (Random &rnd,int p1,int p2);
+	chromosome optimize (Random &rnd, int ngen);
 };
 #endif 

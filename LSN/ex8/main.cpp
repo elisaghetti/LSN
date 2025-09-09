@@ -37,7 +37,7 @@ int main(int argc, char **argv){
 		int sampling_nsteps=10000;
 		
 	
-		string sampling_file ="./OUTPUT/psi_sampling_correct.csv";
+		string sampling_file ="./OUTPUT/psi_sampling_prova.csv";
 		
 		sample_psi(rnd,pos_sampler,init_par,sampling_nsteps,sampling_file);
 	
@@ -48,7 +48,7 @@ int main(int argc, char **argv){
 
 		metro H_eval;
 
-		string ave_file = "./OUTPUT/ave_correct.csv";
+		string ave_file = "./OUTPUT/ave_prova.csv";
 		
 		compute_mean_H(rnd,H_eval,H_blocks,init_par,ave_file);
 

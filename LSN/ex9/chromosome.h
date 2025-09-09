@@ -8,13 +8,21 @@
 #include <armadillo>
 #include <stdlib.h> 
 #include <random.h>
+#include <vector>
 
 using namespace std;
 using namespace arma;
 
 	struct gene {
 		int index;
-		vec position=zeros(2);
+		vector<double> position;
+
+		int get_index(){return index;};
+		void set_index(int i){index=i;};
+		vector <double> get_position (){return position;};
+		void set_position (vector <double> pos) {position=pos;};
+		double get_x(){return position[0];};
+		double get_y(){return position[1];};
 	};
 
 class chromosome { 
@@ -22,7 +30,7 @@ class chromosome {
     private: 
 
     int _ngenes;
-    field <gene> _chromosome;
+    vector <gene> _chromosome;
 	//vec _position;
 	int _simtype;
 	double _fitness;
@@ -34,43 +42,47 @@ class chromosome {
   // Destructor
         ~chromosome(){};
 	
-	vec get_position(int i){
-		return _chromosome(i).position;
+	vector <double> get_position(int i){
+		return _chromosome[i].get_position();
 	}
 
-	void set_position(int i, vec r){
-		_chromosome(i).position=r;
+	void set_position(int i, vector <double> r){
+		_chromosome[i].set_position(r);
 	}
 	gene get_gene(int i){
-		return _chromosome(i);
+		return _chromosome[i];
 	}
+	vector <gene> get_genevector(){return _chromosome;};
+	void set_genevector(vector <gene> ch){_chromosome=ch;};
    void initialize(int n,int sim_type) {
         _ngenes=n;
 		_simtype=sim_type;
 		_fitness=0.;
-        _chromosome.set_size(_ngenes+1);
+       _chromosome.resize(_ngenes+1);
 		for (int i=0;i<_ngenes;i++){
-			_chromosome(i).index = i;
+			_chromosome[i].index = i;
 		
 		}
-		_chromosome(_ngenes).index = 0;
+		_chromosome[_ngenes].index = 0;
 		if (_simtype==0) cout<<"simulating "<<_ngenes<<" cities on a circle"<<endl;
 	};
-	void assign_positions();
-	int get_index(int i){ return _chromosome(i).index;}
-
-	
-
-	void set_element(int index,gene val);
-
+	void assign_positions(Random &rnd);
     void permutation(Random &rnd);
     void check_bonds();
-	vec get_indices_vector();
+	bool check_bonds1();
+	//vec get_indices_vector();
 	 double get_distance(int i1,int i2);
 	 void compute_fitness();
-	 double get_fitness(){return _fitness;};
+	 double  get_fitness() {return _fitness;};
 	void print_configuration();
 	 void shift_cities(Random &rnd);
+	 void inversion(Random &rnd);
+	 void block_permutation(Random &rnd);
+	 void mutation (Random &rnd);
+	void cut(int start);
+	 void paste(vector <gene> block);
+	 void crossover(int cut_pos,chromosome genitore2);
 
  };
+
 #endif
