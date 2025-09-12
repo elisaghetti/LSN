@@ -11,8 +11,6 @@ using namespace arma;
 void chromosome::assign_positions(Random &rnd){
 		if (_simtype ==0){
 	
-			//double dtheta = 2*M_PI/(double(_ngenes));
-			//double theta =0.;
 			vector <double> old_thetas;
 			for (int i=0;i<_ngenes;i++){
 				double theta = rnd.Rannyu(0,2*M_PI);
@@ -20,6 +18,23 @@ void chromosome::assign_positions(Random &rnd){
 				vector <double> pos;
 				pos.push_back(cos(theta));
 				pos.push_back(sin(theta));
+				//theta += dtheta;
+				_chromosome[i].position = pos;
+				
+
+			}
+			_chromosome[_ngenes].position = _chromosome[0].position;
+		}
+
+		if (_simtype ==1){
+	
+			for (int i=0;i<_ngenes;i++){
+				double x = rnd.Rannyu(-1,1);
+				double y= rnd.Rannyu(-1,1);
+			
+				vector <double> pos;
+				pos.push_back(x);
+				pos.push_back(y);
 				//theta += dtheta;
 				_chromosome[i].position = pos;
 				

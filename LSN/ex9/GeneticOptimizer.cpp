@@ -35,7 +35,7 @@ void GeneticOptimizer::create_starting_population(Random &rnd){
 	}
 
 	void GeneticOptimizer::print_configuration(){
-		ofstream out("./OUTPUT/positions.csv");
+		ofstream out("./OUTPUT/positions_square.csv");
 	out<<"ch_index\tindex\tx\ty"<<endl;
 	for (int i=0; i<_population_size;i++){
 		for (int j=0; j<_Ngenes+1;j++){
@@ -84,10 +84,7 @@ int GeneticOptimizer::selection(Random &rnd){
 	
 	int cand = int(rnd.Rannyu(0,_population_size));
 	
-	/*
-	double norm = *max_element(_fitness_values.begin(),_fitness_values.end());
-	double normalized_fitness=_population[cand].get_fitness()/norm;
-	*/
+
 	double r = rnd.Exp(3.);
 
 	//double r = rnd.Rannyu()
@@ -190,17 +187,22 @@ _population[p2].print_configuration();
 }
 
 chromosome GeneticOptimizer::optimize (Random &rnd, int ngen){
-	ofstream out("./OUTPUT/best_distance.csv");
+
+	ofstream out,outa;
+	if(_simtype==0){
+		out.open("./OUTPUT/best_distance_circle.csv");
+		outa.open("./OUTPUT/ave_distance_circle.csv");}
+	if (_simtype==1){
+			out.open("./OUTPUT/best_distance_square.csv");
+		outa.open("./OUTPUT/ave_distance_square.csv")	;
+	}
 	out<<"gen\tdist"<<endl;
+	outa<<"gen\tave_dist"<<endl;
 	
 	for (int i=0;i<ngen;i++){
-		//sort_population();
-		//out<<i<<"\t"<<_population[0].get_cost();<<endl;
-		
-		//sort_population();
 
 		vector <chromosome> new_population;
-	
+		
 		while(new_population.size()<=_population_size) {
 		int p1 = selection(rnd);
 		int p2=selection(rnd);
@@ -224,24 +226,21 @@ chromosome GeneticOptimizer::optimize (Random &rnd, int ngen){
 		genitore2.mutation(rnd);
 		new_population.push_back(genitore1);
 		new_population.push_back(genitore2);
-		//if(genitore1.get_cost()<_population[p1].get_cost() or genitore2.get_cost()<_population[p2].get_cost())new_population.push_back(genitore1);
-		//if(genitore2.get_cost()<_population[p1].get_cost() or genitore2.get_cost()<_population[p2].get_cost())new_population.push_back(genitore2);
 		
-	//}
 	}
 	_population=new_population;
-				sort_population();
-	
+		sort_population();
 		check_order();
+		double ave = accumulate(_cost_values.begin(),_cost_values.begin()+_population_size/2.,0.)/double(_population_size/2.);
+		outa<<i<<"\t"<<ave<<endl;
 		out<<i<<"\t"<<_population[0].get_cost()<<endl;
 
 }
 out.close();
+outa.close();
 sort_population();
 
-	//for (double f : _fitness_values) cout<<f<<" ";
-	//cout<<endl;
-//return _population[_population_size-1];
+
 return _population[0];
 
 }
