@@ -23,7 +23,7 @@ private:
 	int _Ngenes;
 	int _simtype;
 	vector <chromosome> _population;
-	vector <double> _fitness_values;
+	vector <double> _cost_values;
 
 
 public:

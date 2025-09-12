@@ -15,7 +15,7 @@ void GeneticOptimizer::create_starting_population(Random &rnd){
 
 		ch.initialize(_Ngenes,_simtype);
 		ch.assign_positions(rnd);
-		ch.compute_fitness();
+		ch.compute_cost();
 		//_fitness_values.push_back(ch.get_fitness());
 
 		for (int i=0; i<_population_size;i++){
@@ -23,11 +23,11 @@ void GeneticOptimizer::create_starting_population(Random &rnd){
 		
 		chromosome new_ch = ch;
 		for(int j=0;j<n_perm;j++) new_ch.permutation(rnd);
-		new_ch.compute_fitness();
+		new_ch.compute_cost();
 		_population.push_back(new_ch);
 		new_ch.check_bonds();
 		
-		_fitness_values.push_back(new_ch.get_fitness());
+		_cost_values.push_back(new_ch.get_cost());
 	
 	}
 
@@ -48,13 +48,13 @@ void GeneticOptimizer::create_starting_population(Random &rnd){
 
 void GeneticOptimizer::sort_population(){
 	
-
-	sort (_population.begin(),_population.end(), [](chromosome a, chromosome b) {
-              return a.get_fitness() > b.get_fitness();
+	for (chromosome &x : _population) x.compute_cost();
+	stable_sort (_population.begin(),_population.end(), []( chromosome a, chromosome b) {
+              return a.get_cost() <b.get_cost();
           });
 
 	   for (int i = 0; i < _population_size; i++) {
-        _fitness_values[i]=_population[i].get_fitness();
+        _cost_values[i]=_population[i].get_cost();
     }
 
 	
@@ -62,15 +62,18 @@ void GeneticOptimizer::sort_population(){
 }
 
 void GeneticOptimizer::check_order(){
-	vec fitness_values = zeros(_population_size);
+	vector <double> cost_values ;
+	
 	for (int i=0;i<_population_size;i++){
-		_population[i].compute_fitness();
-		fitness_values[i]= _population[i].get_fitness();
+		_population[i].compute_cost();
+		cost_values.push_back( _population[i].get_cost());
+		//cout<< _fitness_values[i]<<" "<<fitness_values[i]<<endl;
+		
 
 	}
+	
+	if (is_sorted(cost_values.begin(),cost_values.end())==false) cerr<<"sorting error"<<endl;
 
-	if (fitness_values.is_sorted("descend")) cout<<"population sorted succesfully"<<endl;
-	else cerr<<"sorting error"<<endl;
 
 }
 
@@ -80,12 +83,13 @@ int GeneticOptimizer::selection(Random &rnd){
 	while(accept==false){
 	
 	int cand = int(rnd.Rannyu(0,_population_size));
+	
 	/*
 	double norm = *max_element(_fitness_values.begin(),_fitness_values.end());
 	double normalized_fitness=_population[cand].get_fitness()/norm;
 	*/
-	double r = rnd.Exp(0.75);
-	
+	double r = rnd.Exp(3.);
+
 	//double r = rnd.Rannyu()
 	if (r>=cand/double(_population_size)) {
 		result = cand;
@@ -114,7 +118,7 @@ void GeneticOptimizer::random_search (Random &rnd, int ngen){
 	ofstream out("./OUTPUT/random_search.csv");
 	out<<"gen\tresults"<<endl;
 	for (int i=0;i<ngen;i++){
-		for (chromosome x:_population) {
+		for (chromosome &x:_population) {
 			x.mutation(rnd);
 			x.check_bonds();
 		}
@@ -134,7 +138,7 @@ void GeneticOptimizer::crossover_g(Random &rnd, int p1, int p2){
 	chromosome genitore2 = _population[p2];
 		//int cut_pos =int(rnd.Rannyu(1,_Ngenes));
 		int cut_pos = 7;
-		cout<<cut_pos<<endl;
+		//cout<<cut_pos<<endl;
 	genitore1.print_configuration();
 	genitore2.print_configuration();
 	_population[p1].crossover(cut_pos,genitore2);
@@ -186,32 +190,58 @@ _population[p2].print_configuration();
 }
 
 chromosome GeneticOptimizer::optimize (Random &rnd, int ngen){
+	ofstream out("./OUTPUT/best_distance.csv");
+	out<<"gen\tdist"<<endl;
+	
 	for (int i=0;i<ngen;i++){
-		sort_population();
+		//sort_population();
+		//out<<i<<"\t"<<_population[0].get_cost();<<endl;
+		
+		//sort_population();
 
-		for (int i=0; i<_population_size;i++){
+		vector <chromosome> new_population;
+	
+		while(new_population.size()<=_population_size) {
+		int p1 = selection(rnd);
+		int p2=selection(rnd);
+
+		chromosome genitore1 = _population[p1];
+
+		chromosome genitore2 = _population[p2];
+
 		double r =rnd.Rannyu();
 		if(r<0.7){
-		int p2=selection(rnd);
-	
-		chromosome genitore1 = _population[i];
-		chromosome genitore2 = _population[p2];
+
 		int cut_pos =int(rnd.Rannyu(1,_Ngenes));
 
-	_population[i].crossover(cut_pos,genitore2);
-	_population[p2].crossover(cut_pos,genitore1);
+		genitore1.crossover(cut_pos,_population[p2]);
+		genitore2.crossover(cut_pos,_population[p1]);
 
-		//crossover()
-
-		_population[i].mutation(rnd);
-		_population[p2].mutation(rnd);
+	
 		}
+		
+		genitore1.mutation(rnd);
+		genitore2.mutation(rnd);
+		new_population.push_back(genitore1);
+		new_population.push_back(genitore2);
+		//if(genitore1.get_cost()<_population[p1].get_cost() or genitore2.get_cost()<_population[p2].get_cost())new_population.push_back(genitore1);
+		//if(genitore2.get_cost()<_population[p1].get_cost() or genitore2.get_cost()<_population[p2].get_cost())new_population.push_back(genitore2);
+		
 	//}
 	}
+	_population=new_population;
+				sort_population();
+	
+		check_order();
+		out<<i<<"\t"<<_population[0].get_cost()<<endl;
+
 }
-	sort_population();
+out.close();
+sort_population();
+
 	//for (double f : _fitness_values) cout<<f<<" ";
 	//cout<<endl;
 //return _population[_population_size-1];
 return _population[0];
+
 }

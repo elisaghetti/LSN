@@ -33,7 +33,7 @@ class chromosome {
     vector <gene> _chromosome;
 	//vec _position;
 	int _simtype;
-	double _fitness;
+	double _cost; //total distance
 
 
     public:
@@ -57,7 +57,7 @@ class chromosome {
    void initialize(int n,int sim_type) {
         _ngenes=n;
 		_simtype=sim_type;
-		_fitness=0.;
+		_cost=0.;
        _chromosome.resize(_ngenes+1);
 		for (int i=0;i<_ngenes;i++){
 			_chromosome[i].index = i;
@@ -72,8 +72,8 @@ class chromosome {
 	bool check_bonds1();
 	//vec get_indices_vector();
 	 double get_distance(int i1,int i2);
-	 void compute_fitness();
-	 double  get_fitness() {return _fitness;};
+	 void compute_cost();
+	 double  get_cost() {return _cost;};
 	void print_configuration();
 	 void shift_cities(Random &rnd);
 	 void inversion(Random &rnd);

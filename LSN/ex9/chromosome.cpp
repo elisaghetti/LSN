@@ -83,17 +83,19 @@ double chromosome::get_distance(int i1,int i2){
 
 }
 
-void chromosome::compute_fitness(){
-	double L1=0.; //cost
+void chromosome::compute_cost(){
+	double L1=0.; 
+	//cost
 	for (int i=0; i<_ngenes;i++){
 		L1+= get_distance(i,i+1);
 	}
-	_fitness=1./double(L1);
-	//_fitness=L1;
+
+	//_fitness=1./double(L1);
+	_cost=L1;
 }
 void chromosome::print_configuration(){
 	for (int i=0;i<_ngenes+1;i++){
-		cout<<_chromosome[i].index;
+		cout<<_chromosome[i].index<<" ";
 	}
 	cout<<endl;
 }
@@ -158,9 +160,9 @@ void chromosome::block_permutation(Random &rnd){
 
 void chromosome::mutation(Random &rnd){
 	double p_perm = 0.1;
-	double p_shift=0.9;
-	double p_inv = 0.8;
-	double p_blockperm =0.7;
+	double p_shift=0.1;
+	double p_inv = 0.1;
+	double p_blockperm =0.1;
 	
 	double rand_perm = rnd.Rannyu();
 	if (rand_perm<p_perm) permutation(rnd);
@@ -187,15 +189,21 @@ void chromosome::paste(vector <gene> block){
 }
 
 void chromosome:: crossover(int cut_pos,chromosome genitore2){
+	//genitore2.print_configuration();
 	vector <gene> genitore1_block (_chromosome.begin()+cut_pos,_chromosome.end()-1);
+	//for (gene x: genitore1_block)cout<<x.index<<" ";
+	
 	vector <gene> ordered_block;
 		for (gene x:genitore2.get_genevector()){
 		for (gene y : genitore1_block){
 			if (x.get_index()==y.get_index()) ordered_block.push_back(y);
 		}
 	}
+	
 	ordered_block.push_back(_chromosome[_ngenes]);
+	//for (gene x:ordered_block)cout<<x.index<<" ";
+	
 		_chromosome.erase(_chromosome.begin()+cut_pos,_chromosome.end());
 		_chromosome.insert(_chromosome.end(),ordered_block.begin(),ordered_block.end());
-		check_bonds();
+		
 }
