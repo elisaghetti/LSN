@@ -21,7 +21,7 @@ b=1
 pars = [m,b]
 sigma = 0
 #dependence of loss on number of epochs
-'''
+
 epochs_data =utils.create_dataset(line,pars,sigma)
 epochs_model,epochs_history = utils.run_sequentialNN(epochs_data,Nlayers=1,Nneurons=1,optimizer = 'sgd')
 epochs_hist =epochs_history.history['loss']
@@ -32,7 +32,7 @@ with open(epochs_file,"w") as out:
     out.write("epoch\tloss\n")
     for i in range(len(epochs_hist)):
         out.write(f"{i}\t{epochs_hist[i]}\n")
-'''
+
 #dependence of loss on training dataset size
 ntrain_hist = []
 Ntmax = 1200
@@ -51,7 +51,7 @@ with open(ntrain_file,"w") as out:
         for i in range(len(ntrain_hist[j])):
             out.write(f"{nt}\t{i}\t{ntrain_hist[j][i]}\n")
 
-'''
+
 #dependence of loss on sigma
 sigmas = np.linspace(0.1,1.6,11)
 print(sigmas)

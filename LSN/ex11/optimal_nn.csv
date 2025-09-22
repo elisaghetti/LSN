@@ -1,0 +1,28 @@
+Choice of layers and neurons:
+layers= 2 neurons = 30	0.5223578810691833
+layers= 5 neurons = 3	7.7734785079956055
+layers= 15 neurons = 5	0.21588021516799927
+layers= 10 neurons = 20	0.012832104228436947
+layers= 10 neurons = random	0.013749131001532078
+BEST: ['layers= 10 neurons = 20'] 	 evaluated loss: 0.012832104228436947
+
+Choice of activation function:
+relu	0.010661928914487362
+sigmoid	0.9766485095024109
+tanh	0.01189467404037714
+selu	0.010149233043193817
+inner: tanh, output: relu	0.019310003146529198
+inner: relu, output: tanh	6.553492546081543
+BEST: ['selu'] 	 evaluated loss: 0.010149233043193817
+
+Choice of optimizer:
+adam	0.010444299317896366
+sgd	0.013114254921674728
+adadelta	12.180829048156738
+BEST: ['adam'] 	 evaluated loss: 0.010444299317896366
+
+Choice of loss function:
+mse	0.012603177689015865
+mae	0.08212930709123611
+msle	0.0008310811244882643
+BEST: ['msle'] 	 evaluated loss: 0.0008310811244882643
