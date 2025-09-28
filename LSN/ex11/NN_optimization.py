@@ -14,6 +14,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.utils import get_custom_objects
 from utils import create_dataset, compare_NN, run_sequentialNN
 
+def order3_polynomial(x,pars): return pars[0]*x**3+pars[1]*x**2+pars[2]*x +pars[3]
 
 #target parameters
 a = 3
@@ -21,15 +22,12 @@ b=-2
 c=-3
 d=4
 pars = [a,b,c,d]
-def order3_polynomial(pars,x): return pars[0]*x**3+pars[1]*x**2+pars[2]*x +pars[3]
-
 sigma = 0.1
-data = create_dataset(order3_polynomial,pars,sigma)
+data = create_dataset(order3_polynomial,sigma,-1,1,parameters=pars)
 
 #OPTIMIZATION OF NN STRUCTURE: number of layers and neurons
-Nlayers = [2,5,15,10,10]
-Nneurons = [30,3,5,20]
-
+Nlayers = [2,3,15,10,10]
+Nneurons = [30,5,5,20]
 
 #hist,pred,labels,scores = utils.compare_NNconfigurations(Nlayers,Nneurons,data)
 hist,pred,labels,scores = compare_NN(data,Nlayers,Nneurons,'structure')
@@ -41,7 +39,6 @@ with open('optimal_nn.csv','w') as out:
     for i in range(len(hist)):
         out.write(f"{labels[i]}\t{scores[i]}\n")
     out.write(f"BEST: {best_label} \t evaluated loss: {np.min(scores)}\n\n")
-
 
 activations = ['relu','sigmoid','tanh','selu']
 Nl = 10

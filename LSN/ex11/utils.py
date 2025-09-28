@@ -13,15 +13,51 @@ from tensorflow.keras.layers import Input,Dense, Activation
 from tensorflow.keras import backend as K
 from tensorflow.keras.utils import get_custom_objects
 
-def generate_xpoints(npoints =500):
+def generate_xpoints(xmin,xmax,npoints):
     np.random.seed(0)
-    x_train = np.random.uniform(-1, 1, npoints)
-    x_valid = np.random.uniform(-1, 1, 50)
+    x_train = np.random.uniform(xmin, xmax, npoints)
+    x_valid = np.random.uniform(xmin, xmax, 50)
     x_valid.sort()
     return x_train,x_valid
 
+def create_dataset(function,sigma,xmin,xmax,parameters=None,x_train =None,x_valid=None,npoints =500,dim=1) :
+    if (x_train is None or x_valid is None):
+        x_train = []
+        x_valid =[]
+        for i in range(dim):
+            xtrain,xvalid = generate_xpoints(xmin,xmax,npoints)
+
+            x_train.append(xtrain)
+            x_valid.append(xvalid)
+
+        x_train = np.array(x_train).T
+        x_valid = np.array(x_valid).T
+    if(dim>1) : 
+       
+        x_train_mesh = np.array(np.meshgrid(x_train[:,0],x_train[:,1])).T
+        print(x_train.shape)
+        x_train=np.reshape(x_train_mesh,(npoints**2,2))
+        x_valid_mesh = np.array(np.meshgrid(x_valid[:,0],x_valid[:,1])).T
+        x_valid=np.reshape(x_valid_mesh,(50**2,2))
+    print(x_valid.shape)    
+
+    y_target = function(x_valid,parameters)
+    y_train = np.random.normal(function(x_train,parameters),sigma)
+     # actual measures from which we want to guess regression parameters
+    y_valid = np.random.normal(function(x_valid,parameters),sigma)
+
+    dataset = {
+        "x_valid" : x_valid,
+        "y_valid" : y_valid,
+        "y_target": y_target,
+        "x_train" : x_train,
+        "y_train" : y_train     
+    }
+    return dataset
+'''
 def create_dataset(function,parameters,sigma,x_train =None,x_valid=None,npoints =500) :
     if (x_train is None or x_valid is None):x_train,x_valid = generate_xpoints(npoints)
+    
     y_target = function(parameters,x_valid)
 
     y_train = np.random.normal(function(parameters,x_train),sigma) # actual measures from which we want to guess regression parameters
@@ -35,7 +71,7 @@ def create_dataset(function,parameters,sigma,x_train =None,x_valid=None,npoints 
         "y_train" : y_train     
     }
     return dataset
-
+'''
 def cut_dataset(data, cut_pos):
     cut_dataset = {
         "x_valid": data['x_valid'][:cut_pos],
@@ -46,10 +82,12 @@ def cut_dataset(data, cut_pos):
     }
     return cut_dataset
 
-def run_sequentialNN (data,Nlayers, Nneurons=None, activation = None, output_activation = None,epochs =70,optimizer = 'adam',loss = 'mse',create_rand_Nn = False) :
+def run_sequentialNN (data,Nlayers,Nneurons=None, activation = None, output_activation = None,epochs =70,optimizer = 'adam',loss = 'mse',create_rand_Nn = False,dim=1) :
     print('begin run')
     model = Sequential()
-    model.add(Input(shape=(1,)))
+    print(data['x_train'].shape[1])
+
+    model.add(Input(shape=(int(dim),)))
     if (Nlayers >1) :
         for j in range (Nlayers-1):
             if (create_rand_Nn): 
@@ -67,7 +105,7 @@ def run_sequentialNN (data,Nlayers, Nneurons=None, activation = None, output_act
     return model,history
 
 def compare_loss_epochs(function,pars,sigma) :
-    epochs_data =create_dataset(function,pars,sigma)
+    epochs_data =create_dataset(function,pars,sigma,-1,1)
     epochs_model,epochs_history = run_sequentialNN(epochs_data,Nlayers=1,Nneurons=1,optimizer = 'sgd')
     epochs_hist =epochs_history.history['loss']
 
@@ -75,7 +113,7 @@ def compare_loss_epochs(function,pars,sigma) :
 
 def compare_loss_Ntrain(function,pars,sigma,Nt) :
     Ntmax = int(np.max(Nt))
-    ntrain_data_max = create_dataset(function,pars,sigma,npoints=Ntmax)
+    ntrain_data_max = create_dataset(function,pars,sigma,-1,1,npoints=Ntmax)
     ntrain_hist=[]
     for n in Nt:
         ntrain_data = cut_dataset(ntrain_data_max,int(n))
@@ -89,7 +127,7 @@ def compare_loss_sigma(function,pars,sigmas) :
     x_train,x_valid = generate_xpoints()
     sigma_hist=[]
     for sigma in sigmas: 
-        data = create_dataset(function,pars,sigma,x_train = x_train,x_valid=x_valid)
+        data = create_dataset(function,pars,sigma,-1,1,x_train = x_train,x_valid=x_valid)
         sigma_model,sigma_history =run_sequentialNN(data,Nlayers=1,Nneurons=1,epochs=35,optimizer = 'sgd')
         sigma_hist.append(sigma_history.history['loss'])
     return sigma_hist
