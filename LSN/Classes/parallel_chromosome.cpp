@@ -51,7 +51,6 @@ void parallel_chromosome::assign_positions(Random &rnd){
 			_chromosome[_ngenes].y = _chromosome[0].y;
 		}
 		if (_simtype==2){
-			cout<<"Simulating shortest path between italian capoluoghi di provincia"<<endl;
 			ifstream in ("cap_prov_ita.dat");
 int i =0;
 			while (!in.eof()){
@@ -68,11 +67,11 @@ int i =0;
 	_chromosome[_ngenes].x = _chromosome[0].x;
 			_chromosome[_ngenes].y = _chromosome[0].y;
 
-		cout<<_chromosome.size()<<endl;
+		
 		in.close();
 
 	}
-	cout<<"Population created"<<endl;
+
 }
 
 void parallel_chromosome::send(int recv){
@@ -81,18 +80,19 @@ void parallel_chromosome::send(int recv){
     MPI_Send(&_ngenes, 1, MPI_INT,recv,0,MPI_COMM_WORLD);
     MPI_Send(&_chromosome[0],_ngenes+1,MPI_gene,recv,1,MPI_COMM_WORLD);
     MPI_Send(&_cost, 1, MPI_DOUBLE,recv,2,MPI_COMM_WORLD);
-	cout<<"sent "<<_ngenes<<" genes"<<endl;
+	//cout<<"sent "<<_ngenes<<" genes to process "<<recv<<endl;
 }
 
 void parallel_chromosome::receive(int sender){
 	int ngenes;
     double cost;
-	vector <gene> chr_vec(ngenes+1);
+	
     MPI_Status status_n,status_ch,status_c;
     //MPI_Datatype MPI_GENE = create_gene();
     MPI_Recv(&ngenes, 1, MPI_INT,sender,0,MPI_COMM_WORLD,&status_n);
   
-    cout<<"received ngenes: "<<ngenes<<endl;
+    //cout<<"received ngenes: "<<ngenes<<endl;
+	vector <gene> chr_vec(ngenes+1);
     MPI_Recv(&chr_vec[0], ngenes+1, MPI_gene,sender,1,MPI_COMM_WORLD,&status_ch);
     MPI_Recv(&cost, 1, MPI_DOUBLE,sender,2,MPI_COMM_WORLD,&status_c);
 	if (_ngenes != ngenes) {cerr<<"Received wrong number of genes: received "<<ngenes<<" while genes are "<<_ngenes<<endl; }
@@ -166,11 +166,12 @@ void parallel_chromosome::compute_cost(){
 	_cost=L1;
 }
 void parallel_chromosome::print_configuration(){
-	for (int i=0;i<10;i++){
+	for (int i=100;i<_ngenes+1;i++){
 		cout<<_chromosome[i].index<<" ";
 	}
 	cout<<endl;
 }
+
 
 //MUTATIONS///////////////////////////
 
