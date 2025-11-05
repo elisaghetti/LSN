@@ -38,10 +38,12 @@ public:
 	int get_population_size(){return _population_size;};
 	
 	parallel_chromosome get_chromosome(int i){return _population[i];};
+	void set_chromosome (int i,parallel_chromosome ch) {_population[i]=ch;};
 	void create_starting_population(Random &rnd);
 	void print_configuration();
 	void sort_population();
 	void check_order();
+	bool is_ordered();
 	int selection (Random &rnd);
 	void select_parents(Random &rnd);
 	void send_population(int recv,int nmin,int nmax);

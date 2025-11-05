@@ -20,13 +20,12 @@ if (size%2 != 0) cerr<<"need even number of cores for algorithm to work"<<endl;
 Random rnd;
 rnd.RandomSetup(rank);
 
-int ngen =300;
+int ngen =50;
 int N_cities = 110;
-int population_size=300;
+int population_size=100;
 int sim_type=2;
-int n_migr =30;
-ofstream out ("./OUTPUT/costs.csv");
-out<<"migr\trank0\trank1\trank2\trank3\t"<<endl;
+int n_migr =200;
+
 
 parallel_GeneticOptimizer gen;
 gen.initialize(sim_type,N_cities,population_size);
@@ -34,11 +33,65 @@ gen.create_starting_population(rnd);
 cout<<"Population for process "<<rank<<"created, population size "<<population_size<<endl;
 parallel_chromosome best_ch;
 
+string cost_file = "./OUTPUT/costs_" + to_string(rank) + ".csv";
+ofstream out(cost_file);
+out<<"gen\tcost"<<endl;
 for (int i=0;i<n_migr;i++){
  best_ch = gen.optimize(rnd,ngen);
+
+ 		//cout<<rank<<endl;
+		//best_ch.print_configuration();
 //cout<<"process "<<rank<<" finished optimization"<<endl;
-if (rank>0) best_ch.send(0);
-if (rank==0){
+vector <int> indices;
+for (int n=0;n<size;n++) indices.push_back(n);
+//if (rank>0) best_ch.send(0);
+if (rank==0) random_shuffle(indices.begin(),indices.end());
+	
+	//send  random pairs to all processes
+MPI_Bcast(&indices[0],size,MPI_INT,0,MPI_COMM_WORLD);
+
+parallel_chromosome new_best;
+
+new_best.initialize(N_cities,2);
+for (int k = 0;k<size;k++){
+	if (k%2==0) {
+		if (rank ==k) best_ch.send(k+1);
+	
+		if (rank == k+1) new_best.receive(k);
+			//cout<<"rank "<<rank<<" received from rank "<<k<<endl;
+		
+}
+
+	else{
+				if (rank ==k) best_ch.send(k-1);
+		if (rank == k-1) new_best.receive(k);
+
+	}
+
+}
+
+bool is_ordered = gen.is_ordered();
+if (is_ordered) gen.set_chromosome(0,new_best);
+else {
+	cout<<"Population not sorted, sorting"<<endl;
+	gen.sort_population();
+	gen.set_chromosome(0,new_best);
+}
+out<<i<<"\t"<<gen.get_chromosome(0).get_cost()<<endl;
+//print costs to file
+}
+out.close();
+string filename = "./OUTPUT/best_path_" + to_string(rank) + ".csv";
+
+			
+ofstream out_path(filename);
+out_path<<"n\tindex\tx\ty"<<endl;
+
+	for (int i=0;i<N_cities+1;i++){
+		out_path<<i<<"\t"<<best_ch.get_gene(i).index<<"\t"<<best_ch.get_gene(i).x<<"\t"<<best_ch.get_gene(i).y<<endl;
+	}
+out_path.close();
+	 /*
 	vector<parallel_chromosome> best_results(size);
 	best_results[0]=best_ch;
 	for (int i=1;i<size;i++) best_results[i].receive(i);
@@ -46,8 +99,10 @@ if (rank==0){
 	for (parallel_chromosome x: best_results) {
 	//x.print_configuration();
 	out<<x.get_cost()<<"\t";
-	}
+	
+
 	out<<endl;
+	
 	//write costs to file
 	
 		//process 0 exchanges with other process
@@ -75,21 +130,14 @@ if (rank==0){
 		//cout<<rank<<endl;
 		//best_ch.print_configuration();
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
+
 }
 out.close();
 
-string filename = "./OUTPUT/best_path_" + to_string(rank) + ".csv";
 
-			
-ofstream out_path(filename);
-out_path<<"n\tindex\tx\ty"<<endl;
-
-	for (int i=0;i<N_cities+1;i++){
-		out_path<<i<<"\t"<<best_ch.get_gene(i).index<<"\t"<<best_ch.get_gene(i).x<<"\t"<<best_ch.get_gene(i).y<<endl;
-	}
-out_path.close();
 	
-
+*/
 MPI_Finalize();
 return 0;
 }

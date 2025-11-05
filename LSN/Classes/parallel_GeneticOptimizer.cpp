@@ -207,7 +207,22 @@ _population[p2].print_configuration();
 
 
 }
+bool parallel_GeneticOptimizer::is_ordered(){
+	vector <double> cost_values ;
+	
+	for (int i=0;i<_population_size;i++){
+		_population[i].compute_cost();
+		cost_values.push_back( _population[i].get_cost());
+		//cout<< _fitness_values[i]<<" "<<fitness_values[i]<<endl;
+		
 
+	}
+	
+	if (is_sorted(cost_values.begin(),cost_values.end())==false) return false;
+	else return true;
+
+
+}
 parallel_chromosome parallel_GeneticOptimizer::optimize (Random &rnd, int ngen){
 
 	ofstream out,outa;
