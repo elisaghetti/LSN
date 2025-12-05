@@ -79,7 +79,7 @@ double r_ave2 =0;
 //for (int j=0; j<Nblocks;j++){
 	double block_ave =0;
 	vec position = zeros(3);
-	for (int i=0;i<3;i++){position[i]=100.;}
+	for (int i=0;i<3;i++){position[i]=0.;}
 
 	for (int i=0; i<Nsteps; i++){ //steps of RW
 
