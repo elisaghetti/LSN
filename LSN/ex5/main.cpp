@@ -27,12 +27,12 @@ double Metropolis_Acceptance(double p_new,double p_old,double T_fwd, double T_bk
 }
 
 
-void Metropolis_Step(Random &rnd,RandomWalk &RW, double &acc_rate, bool ground,bool gauss){
+void Metropolis_Step(Random &rnd,RandomWalk &RW, double &acc_rate, bool ground,string prob_type){
 
 		vec old_pos = RW.Get_position();
 		double r_old = RW.GetDistance();
 double a_0=1;
-		if (gauss) RW.Step_gauss();
+		if (prob_type== "gauss") RW.Step_gauss();
 		else RW.Step_unif();
 		double r_new = RW.GetDistance();
 
@@ -62,34 +62,41 @@ double a_0=1;
 
 int main(){
 
-vec step_length={1.2,2.9}; //for uniform
-//vec step_length={0.85,1.75}; /for gauss
+//vec step_length={1.2,2.9}; //for uniform
+vec step_length={0.85,1.75}; //for gauss
 
-
-int Nblocks= 100;
-
-int Nsteps=1000000;
-
+//to visualize orbitals:
+int Nblocks= 1;
+int Nsteps=2000;
+//for enery measurements:
+//int Nblocks= 100;
+//int Nsteps=1000000;
+/*
 ofstream outa ("acceptance1s.csv");
 outa<<"step_length\tacceptance"<<endl;
 
 ofstream outa2 ("acceptance2p.csv");
 outa2<<"step_length\tacceptance"<<endl;
-
+*/
 //for (int n=0;n<10;n++) { //optimal acceptance cycle
 Random rnd;
 rnd.RandomSetup();
 
-ofstream out("1s.csv");
+//uncomment for sampling measurements
+string prob_type = "gauss";
+
+string output_folder="./OUTPUT/";
+ofstream out(output_folder+prob_type+"1s.csv");
 out<<"x\ty\tz\tr"<<endl;
 
-ofstream outp("2p.csv");
+ofstream outp(output_folder+prob_type+"2p.csv");
 outp<<"x\ty\tz\tr"<<endl;
 
-ofstream outr1("r_ave1s.csv");
+
+ofstream outr1(output_folder+prob_type+"_rsampling_1s.csv");
 outr1<<"block\tave\tprog_ave\terr"<<endl;
 
-ofstream outr2("r_ave2p.csv");
+ofstream outr2(output_folder+prob_type+"_rsampling_ave2p.csv");
 outr2<<"block\tave\tprog_ave\terr"<<endl;
 
 statistics stat;
@@ -109,17 +116,17 @@ for (int j=0; j<Nblocks;j++){
 vec block_ave =zeros(2);
 	for (int i=0; i<Nsteps; i++){ //steps of RW
 		
-		Metropolis_Step(rnd,RW1s,acc_rate[0],1,0);
-		Metropolis_Step(rnd,RW2p,acc_rate[1],0,0);
+		Metropolis_Step(rnd,RW1s,acc_rate[0],1,prob_type); //true for gauss, false for uniform
+		Metropolis_Step(rnd,RW2p,acc_rate[1],0,prob_type);
 		
-		/*
+		
 				for (int k=0;k<3;k++) {
 			out<<RW1s.Get_position()[k]<<"\t";
 			outp<<RW2p.Get_position()[k]<<"\t";
 		}
 		out<<RW1s.GetDistance()<<endl;
 		outp<<RW2p.GetDistance()<<endl;
-		*/
+	
 		block_ave[0] += RW1s.GetDistance();
 		block_ave[1] += RW2p.GetDistance();
 
@@ -140,8 +147,8 @@ acc_rate[0] /=Nsteps*Nblocks;
 acc_rate[1] /=Nsteps*Nblocks;
 cout<<"acceptance rate 1s: "<<acc_rate[0]<<endl;
 cout<<"acceptance rate 2p: "<<acc_rate[1]<<endl;
-outa<<step_length[0]<<"\t"<<acc_rate[0]<<endl;
-outa2<<step_length[1]<<"\t"<<acc_rate[1]<<endl;
+//outa<<step_length[0]<<"\t"<<acc_rate[0]<<endl;
+//outa2<<step_length[1]<<"\t"<<acc_rate[1]<<endl;
 
 cout<<"Average distance 1s: "<<r_ave[0]/double(Nblocks)<<endl;
 cout<<"Average distance 2p: "<<r_ave[1]/double(Nblocks)<<endl;

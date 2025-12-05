@@ -74,10 +74,14 @@ def create_mnist_dataset(img_rows,img_cols,num_classes,NNtype='DNN'):
         if keras.backend.image_data_format() == 'channels_first':
             X_train = X_train.reshape(X_train.shape[0], 1, img_rows, img_cols)
             X_test = X_test.reshape(X_test.shape[0], 1, img_rows, img_cols)
+            X_train = X_train.astype('float32')
+            X_test = X_test.astype('float32')
             input_shape = (1, img_rows, img_cols)
         else:
             X_train = X_train.reshape(X_train.shape[0], img_rows, img_cols, 1)
             X_test = X_test.reshape(X_test.shape[0], img_rows, img_cols, 1)
+            X_train = X_train.astype('float32')
+            X_test = X_test.astype('float32')
             input_shape = (img_rows, img_cols, 1)
     
     Y_train = keras.utils.to_categorical(Y_train, num_classes)
@@ -129,7 +133,7 @@ def compile_model(img_rows,img_cols,num_classes,optimizer):
                   metrics=['acc'])
     return model
 
-def test_DNN (img_rows,img_cols,num_classes,X_train,Y_train,X_test,Y_test,batch_size,epochs,optimizer,return_pred = False):
+def test_DNN (img_rows,img_cols,num_classes,X_train,Y_train,X_test,Y_test,batch_size,epochs,optimizer,return_pred = False,save=True):
   
 
     model = compile_model(img_rows,img_cols,num_classes,optimizer)
@@ -140,12 +144,15 @@ def test_DNN (img_rows,img_cols,num_classes,X_train,Y_train,X_test,Y_test,batch_
           shuffle=True,
           verbose=1,
           validation_data=(X_test, Y_test))
+    
     t1 = time.time()
     print(f'Optimizer {optimizer} took {t1-t0} seconds')
+    if(save): model.save(f'./OUTPUT/DNN_test_{optimizer}_{epochs}.keras')
     if return_pred:
         pred = model.predict(X_test)
         return t1-t0,history,pred
     else : return t1-t0,history
+
 
 '''
 def create_dataset(function,parameters,sigma,x_train =None,x_valid=None,npoints =500) :
