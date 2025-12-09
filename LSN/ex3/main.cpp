@@ -4,27 +4,48 @@
 #include <vector>
 #include <cmath>
 #include "random.h"
-#include "statistics.h"
+
 
 using namespace std;
 
-double error (double av, double av2, int n){
+struct statistics {
+   double ave=0.;
+   double ave2=0.;
+   double block_ave=0.;
+   double block_ave2=0;
+   double err=0.;
+   
+   void reset(){
+      ave=0;
+      ave2=0;
+      err=0;
+   }
+   void compute_err(int n){
+      if (n==1) err=0;
+      else err=sqrt((block_ave2/(n)-pow(block_ave/n,2))/double(n-1));
+   }
 
-   if (n==0) return 0;
-   else return sqrt(double((av2-av*av)/n));
-}
+   void increment_block(int N){
+      ave/=N;
+      ave2=ave*ave;
+      block_ave+=ave;
+      block_ave2+=ave2;
+   }
+};
+
+
 
 double GBM(double t0, double t, double S0, double r, double sigma, double Z){
 	return S0 * exp((r-0.5*sigma*sigma)*(t-t0)+sigma*Z*sqrt(t-t0));
 }
 
-double call (double t,double T, double K, double S0, double r, double sigma, double Z){
+double call_price (double t,double T, double K, double S0, double r, double sigma, double Z){
 	double S = GBM(t,T,S0,r,sigma,Z);
 	if(S-K >0) return exp(-r*T)*(S-K);
 	else return 0;
 }
 
-double put(double t,double T, double K, double S0, double r, double sigma, double Z){
+double put_price(double t,double T, double K, double S0, double r, double sigma, double Z){
 	double S = GBM(t,T,S0,r,sigma,Z);
 	if(K-S >0) return exp(-r*T)*(K-S);
 	else return 0;
@@ -36,7 +57,8 @@ Random rnd;
 
 rnd.RandomSetup();
 
-statistics stat;
+statistics call;
+statistics put;
 
 double S0 = 100.; //intial price
 double T=1.; //final time
@@ -54,37 +76,34 @@ int n = N_tot /N_blocks;
 double C=0;
 double P=0;
 
-string data_call = "data_C_direct.csv";
-ofstream out_dataC(data_call);
+ofstream out("./OUTPUT/call_direct.csv");
+out<<"block\tave\tblock_ave\terr"<<endl;
 
-string data_put = "data_C_direct.csv";
-ofstream out_dataP (data_put);
 
-for(int i=0; i<N_tot; i++){
-	double Z=rnd.Gauss(0,1);
+ofstream out1("./OUTPUT/put_direct.csv");
+out1<<"block\tave\tblock_ave\terr"<<endl;
+
+for(int i=0; i<N_blocks; i++){
+	call.reset();
+	put.reset();
+	for(int j=0;j<n;j++){
+		double Z=rnd.Gauss(0,1);
 		double S =GBM(0.,T,S0,r,sigma,Z);
+		double C_i = call_price(0.,T,K,S0,r,sigma,Z);
+		call.ave+=C_i;
+		double P_i=put_price(0.,T,K,S0,r,sigma,Z);
+		put.ave+=P_i;
+	}	
+	call.increment_block(n);
+	call.compute_err(i+1);
+	out<<i<<"\t"<<call.ave<<"\t"<<call.block_ave/double(i+1)<<"\t"<<call.err<<endl;
 
-		double C_i = call(0.,T,K,S0,r,sigma,Z);
-		double P_i=put(0.,T,K,S0,r,sigma,Z);
-		out_dataC<<C_i<<endl;
-		out_dataP<<P_i<<endl;
-
-		
+	put.increment_block(n);
+	put.compute_err(i+1);
+	out1<<i<<"\t"<<put.ave<<"\t"<<put.block_ave/double(i+1)<<"\t"<<put.err<<endl;
 }
 
-string call_file ="call.csv";
-ofstream out_C(call_file);
-out_C<<"METHOD"<<"\t"<<"INDEX"<<"\t"<<"VALUE"<<"\t"<<"ERROR"<<endl;
 
-string put_file ="put.csv";
-ofstream out_P(put_file);
-out_P<<"TYPE"<<"\t"<<"VALUE"<<"\t"<<"ERROR"<<endl;
-
-stat.SetN(N_blocks,n);
-
-string type = "DIRECT";
-
-stat.block_average_err(data_call, call_file,type);
 
 /*
 

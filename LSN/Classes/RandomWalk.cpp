@@ -28,6 +28,7 @@ RandomWalk :: RandomWalk(int seed, double a, double x, double y, double z){
 	pos_x =x;
 	pos_y=y;
 	pos_z=z;
+	_position=zeros(3);
 }
 
 RandomWalk :: RandomWalk(double a, double x, double y, double z){
@@ -36,6 +37,7 @@ RandomWalk :: RandomWalk(double a, double x, double y, double z){
 	pos_x =x;
 	pos_y=y;
 	pos_z=z;
+	_position=zeros(3);
 }
 
 RandomWalk :: RandomWalk(Random rnd, vec start, double a){
@@ -77,6 +79,10 @@ void RandomWalk::Step_3D (){
 		pos_x += x;
 		pos_y += y;
 		pos_z += z;
+
+	_position[0]=pos_x;
+	_position[1]=pos_y;
+	_position[2]=pos_z;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////777
 void RandomWalk::Step_Lattice (){
@@ -101,7 +107,9 @@ bool direction = true;
 				if (direction==true) pos_z+= a;
 				else pos_z += -a;
 	}
-
+	_position[0]=pos_x;
+	_position[1]=pos_y;
+	_position[2]=pos_z;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void RandomWalk::Step_unif (){
@@ -123,6 +131,6 @@ for (int i=0;i<3;i++){
 /*double RandomWalk :: GetDistance(){
 	return sqrt(pos_x*pos_x + pos_y*pos_y + pos_z*pos_z);
 }*/
-double RandomWalk :: GetDistance(){
+double RandomWalk::GetDistance(){
 	return norm(_position);
 }

@@ -8,6 +8,12 @@
 
 using namespace std;
 
+struct stats {
+   double ave;
+   double block_ave;
+   double err;
+   
+}
 
 int main (int argc, char *argv[]){
 //

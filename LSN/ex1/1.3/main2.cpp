@@ -23,9 +23,9 @@ statistics stats;
 
 int N_throws=10000;
 
-ofstream out("SN_exp.csv");
-ofstream out1("SN_unif.csv");
-ofstream out2("SN_cauchy.csv");
+ofstream out("./OUTPUT/SN_exp.csv");
+ofstream out1("./OUTPUT/SN_unif.csv");
+ofstream out2("./OUTPUT/SN_cauchy.csv");
 
 int N_steps [4]= {1,2,10,100};
 
