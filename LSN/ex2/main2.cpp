@@ -10,6 +10,7 @@
 #include "RandomWalk.h"
 
 using namespace std;
+using namespace arma;
 struct statistics {
    double ave=0.;
    double ave2=0.;
@@ -66,10 +67,11 @@ vector <RandomWalk> lattice;
 vector <RandomWalk> cont;
 //sample points
 for (int i =0; i<N_RW; i++){
-	RandomWalk rw_l(i,a,0,0,0);
+	vec start = zeros(3);
+	RandomWalk rw_l(i,N_steps,a,start);
 	lattice.push_back(rw_l);
 
-	RandomWalk rw_c(i,a,0,0,0);
+	RandomWalk rw_c(i,N_steps,a,start);
 	cont.push_back(rw_c);
 }
 

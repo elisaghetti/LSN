@@ -13,48 +13,30 @@ using namespace std;
 RandomWalk :: RandomWalk(){}
 // Default constructor, does not perform any action
 
-RandomWalk :: RandomWalk(int seed, int index){
+RandomWalk :: RandomWalk(int seed, int dim,int N, double a){
 	
-	_rnd.RandomSetup(index);
-}
-RandomWalk :: RandomWalk(int N, double a){
+	_rnd.RandomSetup(seed);
+	_position=zeros(dim);
 	_Nsteps = N;
 	_steplength=a;
 }
 
-RandomWalk :: RandomWalk(int seed, double a, double x, double y, double z){
-    _rnd.RandomSetup(seed);
+RandomWalk :: RandomWalk(int seed, int N, double a,vec start_pos){
+	_rnd.RandomSetup(seed);
+	_position=start_pos;
+	_Nsteps = N;
 	_steplength=a;
-	pos_x =x;
-	pos_y=y;
-	pos_z=z;
-	_position=zeros(3);
+
 }
 
-RandomWalk :: RandomWalk(double a, double x, double y, double z){
-    _rnd.RandomSetup();
-	_steplength=a;
-	pos_x =x;
-	pos_y=y;
-	pos_z=z;
-	_position=zeros(3);
-}
-
-RandomWalk :: RandomWalk(Random rnd, vec start, double a){
-	_rnd =rnd;
-	//_rnd.RandomSetup();
-	_steplength=a;
-	_position = start;
-}
 
 
 RandomWalk :: ~RandomWalk(){}
-// Default destructor, does not perform any action
 
 void RandomWalk ::SetPosition(double x, double y, double z){
-	pos_x =x;
-	pos_y=y;
-	pos_z=z;
+	_position[0] =x;
+	_position[1]=y;
+	_position[2]=z;
 }
 void RandomWalk ::SetPosition(vec pos){
 for (int i=0;i<3;i++) _position[i] = pos[i];
@@ -76,13 +58,11 @@ void RandomWalk::Step_3D (){
 		double y=_steplength*sin(theta)*sin(phi);
 		double z= _steplength*cos(theta);
 
-		pos_x += x;
-		pos_y += y;
-		pos_z += z;
+		_position[0]  += x;
+		_position[1]  += y;
+		_position[2]  += z;
 
-	_position[0]=pos_x;
-	_position[1]=pos_y;
-	_position[2]=pos_z;
+
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////777
 void RandomWalk::Step_Lattice (){
@@ -95,21 +75,19 @@ bool direction = true;
 	//imposta la direzione (x/y/z)
 	double r2=_rnd.Rannyu();
 	if(r2<= 1./3. ) {
-		if (direction==true) pos_x += a;
-		else pos_x += -a;
+		if (direction==true) _position[0]  += a;
+		else _position[0]  += -a;
 	}
 	if(1./3. < r2 && r2<= 2./3.) {
-				if (direction==true) pos_y += a;
-				else pos_y+= -a;
+				if (direction==true) _position[1] += a;
+				else _position[1] += -a;
 	}
 
 	if(2./3. <=r2) {
-				if (direction==true) pos_z+= a;
-				else pos_z += -a;
+				if (direction==true) _position[2] += a;
+				else _position[2]  += -a;
 	}
-	_position[0]=pos_x;
-	_position[1]=pos_y;
-	_position[2]=pos_z;
+
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void RandomWalk::Step_unif (){

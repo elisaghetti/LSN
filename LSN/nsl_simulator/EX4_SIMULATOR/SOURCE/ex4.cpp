@@ -60,10 +60,10 @@ int main (){
     SYS.block_reset(i+1);
 
     }
- //SYS.finalize();
+ SYS.finalize();
     //EX4.3: inverting direction of time
 
-  
+  /*
     SYS.Reset_Averages();
     SYS.block_reset(0);
     SYS.time_inv();
@@ -94,6 +94,6 @@ for(int i=0; i < SYS.get_nbl(); i++){ //loop over blocks
     }
     SYS.finalize();
     cout<<"check finalize"<<endl;
-  
+  */
 return 0;
 }

@@ -16,7 +16,7 @@ class RandomWalk {
 		double _steplength;
 		vec _position;
 		int _dim;
-		double pos_x,pos_y,pos_z;
+	
 
 		Random _rnd;
 
@@ -24,11 +24,10 @@ class RandomWalk {
 
 	  // Default constructorS
 		RandomWalk();
-		RandomWalk(int seed,int index);
-		RandomWalk(int N, double a);
-		RandomWalk(int seed, double a, double x, double y, double z);
-		RandomWalk(double a, double x, double y, double z);
-		RandomWalk(Random rnd, vec start, double a);
+		RandomWalk(int seed,int index,int N, double a);
+	
+	
+		RandomWalk(int seed, int N, double a,vec start_pos);
 	  // Destructor
 		~RandomWalk();
 
@@ -37,9 +36,9 @@ class RandomWalk {
 		void SetNSteps(int N) {_Nsteps = N;}
 		int GetNSteps(){return _Nsteps;}
 
-		double Get_x () {return pos_x;};
-		double Get_y () {return pos_y;};
-		double Get_z () {return pos_z;};
+		double Get_x () {return _position[0];};
+		double Get_y () {return _position[1];};
+		double Get_z () {return _position[2];};
 
 		vec Get_position(){return _position;};
 

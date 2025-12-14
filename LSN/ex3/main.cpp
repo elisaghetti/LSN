@@ -39,14 +39,12 @@ double GBM(double t0, double t, double S0, double r, double sigma, double Z){
 	return S0 * exp((r-0.5*sigma*sigma)*(t-t0)+sigma*Z*sqrt(t-t0));
 }
 
-double call_price (double t,double T, double K, double S0, double r, double sigma, double Z){
-	double S = GBM(t,T,S0,r,sigma,Z);
+double call_price (double t,double T, double K, double S, double r){
 	if(S-K >0) return exp(-r*T)*(S-K);
 	else return 0;
 }
 
-double put_price(double t,double T, double K, double S0, double r, double sigma, double Z){
-	double S = GBM(t,T,S0,r,sigma,Z);
+double put_price(double t,double T, double K, double S, double r){
 	if(K-S >0) return exp(-r*T)*(K-S);
 	else return 0;
 }
@@ -66,22 +64,23 @@ double K =100.; //strike price
 double r =0.1;
 double sigma = 0.25;
 
-int N_tot =10000; //number of asset prices at time T;
-int N_blocks=100;
+int N_tot =1; //number of asset prices at time T;
+int N_blocks=1;
 int n = N_tot /N_blocks;
 
 
 //direct sampling 
 
-double C=0;
-double P=0;
-
+/*
 ofstream out("./OUTPUT/call_direct.csv");
 out<<"block\tave\tblock_ave\terr"<<endl;
 
 
 ofstream out1("./OUTPUT/put_direct.csv");
 out1<<"block\tave\tblock_ave\terr"<<endl;
+*/
+ofstream out2("./OUTPUT/S_sampling.csv");
+out2<<"t\tS"<<endl;
 
 for(int i=0; i<N_blocks; i++){
 	call.reset();
@@ -89,22 +88,67 @@ for(int i=0; i<N_blocks; i++){
 	for(int j=0;j<n;j++){
 		double Z=rnd.Gauss(0,1);
 		double S =GBM(0.,T,S0,r,sigma,Z);
-		double C_i = call_price(0.,T,K,S0,r,sigma,Z);
+		out2<<T<<"\t"<<S<<endl;
+		double C_i = call_price(0.,T,K,S,r);
 		call.ave+=C_i;
-		double P_i=put_price(0.,T,K,S0,r,sigma,Z);
+		double P_i=put_price(0.,T,K,S,r);
 		put.ave+=P_i;
 	}	
 	call.increment_block(n);
 	call.compute_err(i+1);
-	out<<i<<"\t"<<call.ave<<"\t"<<call.block_ave/double(i+1)<<"\t"<<call.err<<endl;
+	//out<<i<<"\t"<<call.ave<<"\t"<<call.block_ave/double(i+1)<<"\t"<<call.err<<endl;
 
 	put.increment_block(n);
 	put.compute_err(i+1);
-	out1<<i<<"\t"<<put.ave<<"\t"<<put.block_ave/double(i+1)<<"\t"<<put.err<<endl;
+	//out1<<i<<"\t"<<put.ave<<"\t"<<put.block_ave/double(i+1)<<"\t"<<put.err<<endl;
 }
+//out.close();
+//out1.close();
+//discretized sampling
+/*
+ofstream out2c("./OUTPUT/call_discretized.csv");
+out2c<<"block\tave\tblock_ave\terr"<<endl;
 
 
+ofstream out2p("./OUTPUT/put_discretized.csv");
+out2p<<"block\tave\tblock_ave\terr"<<endl;
+*/
 
+statistics call1;
+statistics put1;
+
+for(int i=0; i<N_blocks; i++){
+	call1.reset();
+	put1.reset();
+	for(int j=0;j<n;j++){
+		double t0=0;
+		double C_i=0;
+		double P_i=0;
+		double S;
+		double S_in =S0;
+		while (t0<T){
+			double Z=rnd.Gauss(0,1);
+			double t=t0 + T/100.;
+			S = GBM(t0,t,S_in,r,sigma,Z);
+			out2<<t<<"\t"<<S<<endl;
+			t0 = t;
+			S_in=S;
+			
+		}
+		C_i = call_price(0,T,K,S,r);
+		P_i=put_price(0,T,K,S,r);
+			
+		call1.ave+=C_i;
+		put1.ave+=P_i;
+	}	
+	call1.increment_block(n);
+	call1.compute_err(i+1);
+	//out2c<<i<<"\t"<<call1.ave<<"\t"<<call1.block_ave/double(i+1)<<"\t"<<call1.err<<endl;
+
+	put1.increment_block(n);
+	put1.compute_err(i+1);
+	//out2p<<i<<"\t"<<put1.ave<<"\t"<<put1.block_ave/double(i+1)<<"\t"<<put1.err<<endl;
+}
 /*
 
 vector <double> block_aveC(N_blocks,0);
