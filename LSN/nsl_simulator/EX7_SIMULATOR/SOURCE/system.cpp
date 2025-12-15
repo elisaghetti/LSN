@@ -487,6 +487,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         index_property++;
         //_ptail = 0.0; // TO BE FIXED IN EXERCISE 7
         _ptail = (32.*M_PI*_rho)*(1./double(9*pow(_r_cut,9))-1./double(6*pow(_r_cut,3))); 
+        
           ofstream out("../OUTPUT/output.dat",ios::app);
         out<<"ptail=\t"<<_ptail<<endl;
         out.close();
@@ -497,12 +498,17 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         input>>_n_bins;
         _nprop+=_n_bins;
         _bin_size = (_halfside.min() )/(double)_n_bins;
-          ofstream coutgr("../OUTPUT/gofr.csv");
+              string gofr_file1;
+        if (_sim_type==0) gofr_file1="../OUTPUT/gofr_MD.csv";
+        if (_sim_type==1) gofr_file1="../OUTPUT/gofr_MC.csv";
+          ofstream coutgr(gofr_file1);
         coutgr <<"BIN SIZE\t"<<_bin_size<<endl;
         coutgr << "BIN\tDISTANCE\tAVE_GOFR\tERROR" << endl;
         coutgr.close();
-
-        coutgr.open("../OUTPUT/gofr_blockave.csv");
+        string gofr_file;
+        if (_sim_type==0) gofr_file="../OUTPUT/gofr_blockave_MD.csv";
+        if (_sim_type==1) gofr_file="../OUTPUT/gofr_blockave_MC.csv";
+        coutgr.open(gofr_file);
         coutgr <<"BIN SIZE\t"<<_bin_size<<endl;
         coutgr << "BIN\tDISTANCE\tAVE_GOFR" << endl;
         coutgr.close();
@@ -774,6 +780,7 @@ void System :: measure(){ // Measure properties
         
         // GOFR ... TO BE FIXED IN EXERCISE 7
         if(dr < _r_cut){
+          
           if(_measure_penergy)  penergy_temp += 1.0/pow(dr,12) - 1.0/pow(dr,6); // POTENTIAL ENERGY (LJ)
           if(_measure_pressure) virial       += 1.0/pow(dr,12) - 0.5/pow(dr,6); // PRESSURE (contributo delle forze interne, dal viriale)
         }
@@ -808,17 +815,20 @@ void System :: measure(){ // Measure properties
 }
   // POTENTIAL ENERGY //////////////////////////////////////////////////////////
   if (_measure_penergy){ //registro le info solo se sto misurando quella proprietà 
+
     penergy_temp = _vtail + 4.0 * penergy_temp / double(_npart); //moltiplicazione fuori dal ciclo per efficienza
     _measurement(_index_penergy) = penergy_temp;
   }
   // KINETIC ENERGY ////////////////////////////////////////////////////////////
   if (_measure_kenergy){
+
     for (int i=0; i<_npart; i++) kenergy_temp += 0.5 * dot( _particle(i).getvelocity() , _particle(i).getvelocity() ); 
     kenergy_temp /= double(_npart);
     _measurement(_index_kenergy) = kenergy_temp;
   }
   // TOTAL ENERGY (kinetic+potential) //////////////////////////////////////////
   if (_measure_tenergy){
+ 
     if (_sim_type < 2) _measurement(_index_tenergy) = kenergy_temp + penergy_temp;
     else { 
       double s_i, s_j;
@@ -851,6 +861,7 @@ if (_measure_cv){
   // TEMPERATURE ///////////////////////////////////////////////////////////////
   //if (_measure_temp and _measure_kenergy) _measurement(_index_temp) = (2.0/3.0) * kenergy_temp;
  if (_measure_temp){
+  
     if(_measure_kenergy) _measurement(_index_temp) = (2.0/3.0) * kenergy_temp;
     //else cerr<<"Temperature measurement needs kinetic energy measurement"<<endl;
     else _measurement(_index_temp) = _temp;
@@ -1082,9 +1093,17 @@ if (_measure_gofr){
   gofr_ave.zeros();
   gofr_sum_ave.zeros();
   gofr_sum_ave2.zeros();
-      ofstream coutg;
-      coutg.open("../OUTPUT/gofr_blockave.csv",ios::app);
-      coutf.open("../OUTPUT/gofr.csv",ios::app);
+    ofstream coutg;
+      string gofr_file,gofr_file1;
+        if (_sim_type==0) {
+          gofr_file="../OUTPUT/gofr_MD.csv";
+          gofr_file1="../OUTPUT/gofr_blockave_MD.csv";}
+        if (_sim_type==1) {
+          gofr_file="../OUTPUT/gofr_MD.csv";
+          gofr_file1="../OUTPUT/gofr_blockave_MC.csv";}
+        
+      coutg.open(gofr_file1,ios::app);
+      coutf.open(gofr_file,ios::app);
     for (int j=0; j<_n_bins;j++){
     gofr_ave(j)  = _average(_index_gofr+j);
     gofr_sum_ave(j) = _global_av(_index_gofr+j);
