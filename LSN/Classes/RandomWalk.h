@@ -25,7 +25,7 @@ class RandomWalk {
 	  // Default constructorS
 		RandomWalk();
 		RandomWalk(int seed,int index,int N, double a);
-	
+		RandomWalk(Random rnd, vec start_pos,double a);
 	
 		RandomWalk(int seed, int N, double a,vec start_pos);
 	  // Destructor

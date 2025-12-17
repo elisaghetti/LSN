@@ -41,33 +41,38 @@ int main (int argc, char *argv[]){
   }
     if (SYS.Get_symtype()==1){
 
+      /*
       //TO DETERMINE ACCEPTANCE
-     /* 
+     ofstream outac;
+     outac.open ("../OUTPUT/acceptance_tries.csv");
+     outac<<"delta\tacc"<<endl;
       for (int i=0; i<SYS.get_nbl();i++){
         for (int j=0;j<SYS.get_nsteps();j++){
         SYS.step();
         SYS.measure();
       }
-        SYS.save_acc(i+1);
+      outac<<SYS.get_delta()<<"\t"<<SYS.get_acc_rate()<<endl;
+
+        //SYS.save_acc(i+1);
         SYS.block_reset(i+1);
         SYS.change_delta(0.01);
         cout<<SYS.get_delta()<<endl;
       }
 
-*/
-      cout<<YELLOW<<"Equilibration started at energy "<<SYS.Get_PE()<<endl;
+outac.close();*/
+      cout<<YELLOW<<"Equilibration started at acceptance "<<SYS.Get_PE()<<endl;
     
     ofstream out;
    out.open("../OUTPUT/Equilibration_MC.csv");
-    out<<"Step\tEnergy"<<endl;
+    out<<"Step\tacc_rate"<<endl;
     for (int i=0;i<3000;i++){
 
         SYS.step();
         SYS.measure();
-        out<<i<<"\t"<<SYS.Get_PE()<<endl;
+        out<<i<<"\t"<<SYS.get_acc_rate()<<endl;
     }
     out.close();
-    cout<<"Equilibration completed at energy E="<<SYS.Get_PE()<<RESET<<endl;
+    cout<<"Equilibration completed at acceptance E="<<SYS.get_acc_rate()<<RESET<<endl;
     }
   
     SYS.Reset_Averages();

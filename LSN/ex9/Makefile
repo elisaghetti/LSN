@@ -23,4 +23,4 @@ copy_files:
 	cp $(RANDOM_PATH)/seed.in .
 
 clean:
-	rm -f *.o main1.exe Primes seed.in
+	rm -f *.o main.exe Primes seed.in

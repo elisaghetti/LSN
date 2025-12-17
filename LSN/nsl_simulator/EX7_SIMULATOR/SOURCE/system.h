@@ -75,6 +75,7 @@ private:
 
 
 public: // Function declarations
+double get_acc_rate(){return double(_naccepted)/double(_nattempts);};
   int get_nbl();              // Get the number of blocks
   int get_nsteps();           // Get the number of steps in each block
   int get_n_bins_v() {return _n_bins_v;};

@@ -28,10 +28,7 @@ int main(int argc, char **argv){
 		metro trial;
 	
 		metro pos_sampler;
-			/*
-		string eq_file = "./OUTPUT/acceptance.csv";
-		Equilibration(rnd,trial,init_par,2000,eq_file);
-		*/
+		
 
 		//sampling
 		int sampling_nsteps=10000;
@@ -67,9 +64,6 @@ cin>>scaling>>scaling_val;
 Random rnd;
 rnd.RandomSetup(); 
 
-
-
-//int temp_steps =50;
 int temp_step =0.;
 
 SApar old_par;
@@ -94,15 +88,13 @@ old_par.meanH=H_blocks.block_ave/double(H_blocks.Nblocks);
 cout<<"begin temp cycle"<<endl;
 
 int Nsteps=1000;
-//for(int i=0;i<temp_steps;i++) {//H evaluation blocks
+
 while(beta_start<beta_max){
 	temp_step++;
-	//SA_blocks.Nblocks*=(beta_start
+
 	
 	vec results =annealing_step(rnd,Nsteps,H_eval,beta_start,old_par,H_blocks);
-	//SA_blocks.increment(SA_blocks.Nblocks-1);
-	
-	//cout<<SA_blocks.Nblocks<<" "<<" "<<SA_blocks.block_ave/SA_blocks.Nblocks<<" "<<SA_blocks.err<<endl;
+
 	out<<beta_start<<"\t"<<results[0]<<"\t"<<results[1]<<"\t"<<results[2]<<"\t"<<results[3]<<"\t"<<old_par.meanH<<"\t"<<H_blocks.err<<endl;
 	out1<<beta_start<<"\t"<<old_par.mu<<"\t"<<old_par.sigma<<endl;
 	cout<<"step "<<temp_step<<"beta: "<<beta_start<<" ave meanH: "<<results[0]<<" bets meanH"<<results[2]<<endl;
@@ -115,7 +107,6 @@ while(beta_start<beta_max){
 
 
 
-//SApar fin_par = simulated_annealing(beta_start,temp_steps,Nsteps,Nblocks,rnd);
 
 cout<<"Final result: "<<endl;
 cout<<"<H>: "<<old_par.meanH<<" error: "<<H_blocks.err<<endl;
@@ -131,7 +122,7 @@ final_Hblocks.Nsteps=10000;
 
 compute_mean_H(rnd,final_Heval,final_Hblocks,old_par,fin_file);
 
-string sampling_file = "./OUTPUT/finalguess_sampling_"+scaling+to_string(scaling_val)+".csv";;
+string sampling_file = "./OUTPUT/finalguess_sampling_"+scaling+to_string(scaling_val)+".csv";
 
 metro pos_sampler;
 sample_psi(rnd,pos_sampler,old_par,10000,sampling_file);

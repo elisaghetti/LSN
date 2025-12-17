@@ -33,14 +33,15 @@ struct statistics {
 
 using namespace std;
 int main() {
-double l= 0.7; //needle length
+double l= 0.6; //needle length
 double D = 1;
 Random rnd;
 rnd.RandomSetup();
-int N_throws = 100000;
+int N_throws = 10000;
 int Nblocks=100;
-  ofstream out("./OUTPUT/needle_positions.csv");
-out<<"hit\txmin\txmax\tymin\tymax"<<endl;
+
+  //ofstream out("./OUTPUT/positions.csv");
+//out<<"hit\txmin\txmax\tymin\tymax"<<endl;
   ofstream out1("./OUTPUT/pi_ave.csv");
 out1<<"block\tave\tblock_ave\terr"<<endl;
 int N_steps=1;
@@ -48,39 +49,42 @@ statistics pi;
 
 for (int j=0;j<Nblocks;j++){
    pi.reset();
-for (int k=0;k<N_steps;k++){
+
 int N_hit =0;
    for(int i=0; i<N_throws; i++){
+      int hit =0;
       //genero punto medio della barretta
-  // double x_1 = rnd.Rannyu();
-   double y1 = rnd.Rannyu();
-   
-   //genero angolo tra 0 e pi senza usare pi
-
-   double sintheta;
-   do{
-   double Rsintheta = rnd.Rannyu(-1,1);
-   double Rcostheta = rnd.Rannyu(-1,1);
-   double R = sqrt(Rsintheta*Rsintheta+Rcostheta*Rcostheta);
-   sintheta = Rsintheta/double(R);
-   } while (fabs(sintheta)>1.);
-   double y2= y1 +l*(sintheta);
-
-      //double inf = double(int(y_m*10)/10.);
-   //double sup = double(int(y_m*10)+1)/10.;
-   int hit =0;
-   if (y1==0. || y2<=0. || y2>=1.){
+  double x1 = rnd.Rannyu(-1,1); //just for visualization purposes
+   double y1 = rnd.Rannyu(0,D);
+   if (y1==0. or y1==D ){
      N_hit++;
+     hit=1;
+     continue;
 
    }
+   //genero angolo tra 0 e pi senza usare pi
 
-   //out<<hit<<"\t"<<xmin<<"\t"<<xmax<<"\t"<<ymin<<"\t"<<ymax<<endl;
-}
-   //out<<hit<<"\t"<<xmin<<"\t"<<xmax<<"\t"<<ymin<<"\t"<<ymax<<endl;
+   double R,Rsintheta;
+   do{
+   Rsintheta = rnd.Rannyu(-1,1);
+   double Rcostheta = rnd.Rannyu(-1,1);
+   R = sqrt(Rsintheta*Rsintheta+Rcostheta*Rcostheta);
+   } while (R>1);
+   double sintheta = Rsintheta/double(R);
+   double y2= y1 +l*(sintheta);
+   int x_sign=1;
+   if(rnd.Rannyu(-1,1)<0) x_sign=-1;
+   double x2=x1+x_sign*sqrt(l*l-(y2-y1)*(y2-y1));
+   
+   if (y2<=0. or y2>=D ){
+     N_hit++;
+     hit=1;
+   }
+  // out<<hit<<"\t"<<x1<<"\t"<<x2<<"\t"<<y1<<"\t"<<y2<<endl;
 
-pi.ave+=(2*l*N_throws)/double(N_hit*D);
-}
-pi.increment_block(N_steps);
+   }
+pi.ave=(2*l*N_throws)/double(N_hit*D);
+pi.increment_block(1);
 pi.compute_err(j+1);
 out1<<j<<"\t"<<pi.ave<<"\t"<<pi.block_ave/(double(j+1))<<"\t"<<pi.err<<endl;
 }

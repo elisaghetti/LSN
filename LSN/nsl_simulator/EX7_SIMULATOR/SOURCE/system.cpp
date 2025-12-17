@@ -421,21 +421,18 @@ void System :: initialize_properties(){ // Initialize data members used for meas
           ofstream coutp;
           if (_sim_type==0) coutp.open("../OUTPUT/potential_energy_MD.csv");
           if (_sim_type==1) coutp.open("../OUTPUT/potential_energy_MC.csv");
-        //coutp << "#     BLOCK:  ACTUAL_PE:     PE_AVE:      ERROR:" << endl;
+
         coutp << "T_SIGN\tBLOCK\tACTUAL_PE\tPE_AVE\tERROR" << endl;
         coutp.close();
 
-        coutp.open("../OUTPUT/U_block_length.csv");
-        coutp << "LENGTH\tERROR" << endl;
-        coutp.close();
-
+ 
         _nprop++;
         _index_penergy = index_property;
         
         
         _measure_penergy = true;
         index_property++;
-       // _vtail = 0.0; // TO BE FIXED IN EXERCISE 7
+       
          double A = 8.*M_PI*_rho;
         _vtail = A/double(9*pow(_r_cut,9))-A/double(3*pow(_r_cut,3)); //manca epsilon?
         ofstream out("../OUTPUT/output.dat",ios::app);
@@ -478,8 +475,10 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         index_property++;
       } else if( property == "PRESSURE" ){
         //ofstream coutpr("../OUTPUT/pressure.dat");
-        ofstream coutpr("../OUTPUT/pressure.csv");
-        coutpr << "#     BLOCK:   ACTUAL_P:     P_AVE:       ERROR:" << endl;
+        ofstream coutpr;
+        if(_sim_type==0) coutpr.open("../OUTPUT/pressure_MD.csv");
+         if(_sim_type==1) coutpr.open("../OUTPUT/pressure_MC.csv");
+        coutpr << "#\tBLOCK\tACTUAL_P\tP_AVE\tERROR" << endl;
         coutpr.close();
         _nprop++;
         _measure_pressure = true;
@@ -487,6 +486,7 @@ void System :: initialize_properties(){ // Initialize data members used for meas
         index_property++;
         //_ptail = 0.0; // TO BE FIXED IN EXERCISE 7
         _ptail = (32.*M_PI*_rho)*(1./double(9*pow(_r_cut,9))-1./double(6*pow(_r_cut,3))); 
+      
         
           ofstream out("../OUTPUT/output.dat",ios::app);
         out<<"ptail=\t"<<_ptail<<endl;
@@ -869,7 +869,10 @@ if (_measure_cv){
     
     
   // PRESSURE ///////////////////////////////////////////////////////////////////////
-  if (_measure_pressure) _measurement[_index_pressure] = _rho * (2.0/3.0) * kenergy_temp + (_ptail*_npart + 48.0*virial/3.0)/_volume;
+  if (_measure_pressure) {
+    if (_sim_type==0) _measurement[_index_pressure] = _rho * (2.0/3.0) * kenergy_temp + (_ptail*_npart + 48.0*virial/3.0)/_volume;
+    if (_sim_type==1) _measurement[_index_pressure] = _rho * _temp + (_ptail*_npart + 48.0*virial/3.0)/_volume;
+  }
   // MAGNETIZATION //////////////////////////////////////////////////////////////////
 
 
@@ -1073,14 +1076,15 @@ void System :: averages(int blk){ //fa le medie all'interno del blocco
   // PRESSURE //////////////////////////////////////////////////////////////////
   if (_measure_pressure){
     //coutf.open("../OUTPUT/pressure.dat",ios::app);
-    coutf.open("../OUTPUT/pressure.csv",ios::app);
+    if(_sim_type==0)coutf.open("../OUTPUT/pressure_MD.csv",ios::app);
+    if(_sim_type==1)coutf.open("../OUTPUT/pressure_MC.csv",ios::app);
     average  = _average(_index_pressure);
     sum_average = _global_av(_index_pressure);
     sum_ave2 = _global_av2(_index_pressure);
-    coutf << setw(12) << blk
-          << setw(12) << average
-          << setw(12) << sum_average/double(blk)
-          << setw(12) << this->error(sum_average, sum_ave2, blk) << endl;
+    coutf << "\t"<< blk
+          << "\t" << average
+          << "\t" << sum_average/double(blk)
+          << "\t"<< this->error(sum_average, sum_ave2, blk) << endl;
     coutf.close();
   }
 

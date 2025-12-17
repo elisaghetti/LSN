@@ -56,7 +56,7 @@ def create_dataset(function,sigma,xmin,xmax,parameters=None,x_train =None,x_vali
     return dataset
 '''
 def create_dataset(function,parameters,sigma,x_train =None,x_valid=None,npoints =500) :
-    if (x_train is None or x_valid is None):x_train,x_valid = generate_xpoints(npoints)
+    if (x_train is None or x_valid is None):x_train,x_valid = generate_xpoints(-1,1,npoints)
     
     y_target = function(parameters,x_valid)
 

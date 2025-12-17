@@ -23,7 +23,7 @@ c=-3
 d=4
 pars = [a,b,c,d]
 sigma = 0.1
-data = create_dataset(order3_polynomial,sigma,-1,1,parameters=pars)
+data = create_dataset(order3_polynomial,sigma,-1,1,parameters=par&)
 
 #OPTIMIZATION OF NN STRUCTURE: number of layers and neurons
 Nlayers = [2,3,15,10,10]

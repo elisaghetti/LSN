@@ -28,6 +28,12 @@ RandomWalk :: RandomWalk(int seed, int N, double a,vec start_pos){
 	_steplength=a;
 
 }
+RandomWalk :: RandomWalk(Random rnd,vec start_pos,double a){
+	_rnd = rnd;
+	_position=start_pos;
+	_steplength=a;
+
+}
 
 
 
